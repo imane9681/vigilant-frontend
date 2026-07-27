@@ -44,15 +44,19 @@ const TopProductsTable = ({ darkMode, topProducts, onRefresh }) => {
   const [showReorderModal, setShowReorderModal] = useState(false);
 
   // ✅ ✅ ✅ دالة للحصول على رابط الصورة
-  const getImageUrl = (image) => {
-    if (!image) return null;
-    if (typeof image === 'string') {
-      if (image.startsWith('http')) return image;
-      if (image.startsWith('/media/')) return `http://localhost:8000${image}`;
-      return `http://localhost:8000/media/${image}`;
+ const getImageUrl = (image) => {
+  if (!image) return null;
+  if (typeof image === 'string') {
+    if (image.startsWith('http')) return image;
+    if (image.startsWith('/media/')) {
+      // ✅ غيرنا localhost إلى رابط Render
+      return `https://vigilant-backend-8owb.onrender.com${image}`;
     }
-    return null;
-  };
+    // ✅ غيرنا localhost إلى رابط Render
+    return `https://vigilant-backend-8owb.onrender.com/media/${image}`;
+  }
+  return null;
+};
 
   // ✅ ✅ ✅ دالة للحصول على صورة المنتج من مصادر متعددة
   const getProductImage = (product) => {

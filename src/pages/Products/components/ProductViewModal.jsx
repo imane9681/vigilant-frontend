@@ -45,16 +45,20 @@ const ProductViewModal = ({ darkMode, product, onClose, onEdit }) => {
 
   if (!product) return null;
 
-  const getImageUrl = (image) => {
-    if (!image) return '';
-    if (typeof image === 'string') {
-      if (image.startsWith('http')) return image;
-      if (image.startsWith('/media/')) return `http://localhost:8000${image}`;
-      if (image.startsWith('data:')) return image;
-      return `http://localhost:8000/media/${image.replace(/^\/+/, '')}`;
+ const getImageUrl = (image) => {
+  if (!image) return '';
+  if (typeof image === 'string') {
+    if (image.startsWith('http')) return image;
+    if (image.startsWith('/media/')) {
+      // ✅ غيرنا localhost إلى رابط Render
+      return `https://vigilant-backend-8owb.onrender.com${image}`;
     }
-    return '';
-  };
+    if (image.startsWith('data:')) return image;
+    // ✅ غيرنا localhost إلى رابط Render
+    return `https://vigilant-backend-8owb.onrender.com/media/${image.replace(/^\/+/, '')}`;
+  }
+  return '';
+};
 
   const formatCurrency = (value) => {
     const num = typeof value === 'string' ? parseFloat(value.replace(/[$,]/g, '')) : value;

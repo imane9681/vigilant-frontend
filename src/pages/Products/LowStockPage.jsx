@@ -80,14 +80,18 @@ const LowStockPage = ({ darkMode }) => {
         
         // ✅ دالة للحصول على رابط الصورة
         const getImageUrl = (image) => {
-          if (!image) return null;
-          if (typeof image === 'string') {
-            if (image.startsWith('http')) return image;
-            if (image.startsWith('/media/')) return `http://localhost:8000${image}`;
-            return `http://localhost:8000/media/${image}`;
-          }
-          return null;
-        };
+  if (!image) return null;
+  if (typeof image === 'string') {
+    if (image.startsWith('http')) return image;
+    if (image.startsWith('/media/')) {
+      // ✅ غيرنا localhost إلى رابط Render
+      return `https://vigilant-backend-8owb.onrender.com${image}`;
+    }
+    // ✅ غيرنا localhost إلى رابط Render
+    return `https://vigilant-backend-8owb.onrender.com/media/${image}`;
+  }
+  return null;
+};
         
         // ✅ الحصول على الصورة
         let imageUrl = null;
