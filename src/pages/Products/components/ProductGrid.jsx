@@ -28,9 +28,6 @@ import {
   FolderTree
 } from 'lucide-react';
 
-// ✅ استيراد الدوال المساعدة من api.js
-import { getImageUrl, getFallbackImage } from '../../../services/api';
-
 const ProductGrid = ({ 
   darkMode, 
   products, 
@@ -42,12 +39,33 @@ const ProductGrid = ({
 }) => {
   const [activeImageIndex, setActiveImageIndex] = useState({});
 
+  // تشخيص البيانات
+  useEffect(() => {
+    if (products && products.length > 0) {
+
+      products.forEach((product, index) => {
+        
+      });
+    }
+  }, [products]);
+
   const colors = {
     primary: '#8B7ABA',
     secondary: '#F08FAE',
     accent: '#EE9C6C',
     success: '#34D19C',
     gradient: 'linear-gradient(135deg, #8B7ABA 0%, #F08FAE 50%, #EE9C6C 100%)'
+  };
+
+  const categoryImages = {
+    'Electronics': 'https://images.unsplash.com/photo-1550009158-9ebf69173e03?w=800&h=600&fit=crop&auto=format',
+    'Clothing': 'https://images.unsplash.com/photo-1441984904996-e0b6ba687e04?w=800&h=600&fit=crop&auto=format',
+    'Home & Garden': 'https://images.unsplash.com/photo-1583847268964-b28dc8f51f92?w=800&h=600&fit=crop&auto=format',
+    'Books': 'https://images.unsplash.com/photo-1524995997946-a1c2e315a42f?w=800&h=600&fit=crop&auto=format',
+    'Sports': 'https://images.unsplash.com/photo-1517466787929-bc90951d0974?w=800&h=600&fit=crop&auto=format',
+    'Health': 'https://images.unsplash.com/photo-1505751172876-fa1923c5c528?w=800&h=600&fit=crop&auto=format',
+    'Beauty': 'https://images.unsplash.com/photo-1596462502278-27bfdc403348?w=800&h=600&fit=crop&auto=format',
+    'Other': 'https://images.unsplash.com/photo-1472851294608-062f824d29cc?w=800&h=600&fit=crop&auto=format'
   };
 
   const getStockStatus = (quantity) => {
@@ -87,7 +105,7 @@ const ProductGrid = ({
     }
   };
 
-  // ✅ دالة لجلب جميع صور المنتج
+  // دالة محسنة لجلب جميع صور المنتج
   const getProductImages = (product) => {
     if (product?.images && Array.isArray(product.images) && product.images.length > 0) {
       return product.images;
@@ -95,16 +113,37 @@ const ProductGrid = ({
     if (product?.image && typeof product.image === 'string') {
       return [product.image];
     }
-    return [getFallbackImage(product?.category)];
+    if (product?.image_url && typeof product.image_url === 'string') {
+      return [product.image_url];
+    }
+    return [categoryImages[product?.category] || categoryImages['Other']];
   };
 
-  // دالة للحصول على أيقونة الفئة
+  // دالة محسنة لجلب URL الصورة
+  const getImageUrl = (image, product) => {
+    if (!image) {
+      return categoryImages[product?.category] || categoryImages['Other'];
+    }
+    if (typeof image === 'string') {
+      if (image.startsWith('http')) return image;
+      if (image.startsWith('/media/')) {
+        return `http://localhost:8000${image}`;
+      }
+      if (image.startsWith('data:')) return image;
+      return `http://localhost:8000/media/${image.replace(/^\/+/, '')}`;
+    }
+    return categoryImages[product?.category] || categoryImages['Other'];
+  };
+
+  // ✅ دالة للحصول على أيقونة الفئة (محسنة)
   const getCategoryIconComponent = (categoryId, size = 16) => {
+    // إذا كانت الدالة getCategoryIcon مرسلة من الخارج
     if (getCategoryIcon) {
       const icon = getCategoryIcon(categoryId, size);
       if (icon) return icon;
     }
     
+    // fallback: استخدام الأيقونات الافتراضية
     const icons = {
       'Electronics': <Laptop size={size} className="transition-transform group-hover:rotate-12" />,
       'Clothing': <Shirt size={size} className="transition-transform group-hover:scale-110" />,
@@ -116,23 +155,26 @@ const ProductGrid = ({
       'Other': <Package size={size} className="transition-transform group-hover:translate-y-[-2px]" />
     };
     
+    // ✅ استخدام اسم الفئة إذا كان categoryId هو اسم، أو البحث في الفئات
     if (typeof categoryId === 'string') {
       return icons[categoryId] || <FolderTree size={size} />;
     }
     return <FolderTree size={size} />;
   };
 
-  // دالة للحصول على اسم الفئة
+  // ✅ دالة للحصول على اسم الفئة (محسنة)
   const getCategoryNameDisplay = (categoryId) => {
     if (getCategoryName) {
       const name = getCategoryName(categoryId);
       if (name) return name;
     }
     
+    // fallback: إذا كان categoryId هو اسم بالفعل
     if (typeof categoryId === 'string' && !categoryId.match(/^\d+$/)) {
       return categoryId;
     }
     
+    // أسماء افتراضية للأرقام
     const categoryNames = {
       '1': 'Electronics',
       '2': 'Clothing',
@@ -146,13 +188,14 @@ const ProductGrid = ({
     return categoryNames[categoryId] || 'Other';
   };
 
-  // دالة للحصول على لون الفئة
+  // ✅ دالة للحصول على لون الفئة (محسنة)
   const getCategoryColorDisplay = (categoryId) => {
     if (getCategoryColorClass) {
       const color = getCategoryColorClass(categoryId);
       if (color) return color;
     }
     
+    // fallback: استخدام الألوان الافتراضية
     const colors = {
       'Electronics': darkMode ? 'bg-purple-900/30 text-purple-400' : 'bg-purple-100 text-purple-700',
       'Clothing': darkMode ? 'bg-pink-900/30 text-pink-400' : 'bg-pink-100 text-pink-700',
@@ -208,7 +251,7 @@ const ProductGrid = ({
     return `${Math.floor(diffDays / 30)} months ago`;
   };
 
-  // ✅ مكون الصورة مع التنقل - استخدام getImageUrl المستوردة
+  // مكون الصورة مع التنقل
   const ProductImage = ({ product, categoryGradient }) => {
     const [isLoading, setIsLoading] = useState(true);
     const [hasError, setHasError] = useState(false);
@@ -223,8 +266,8 @@ const ProductGrid = ({
     
     const imageCount = imagesList.length;
     const hasMultipleImages = imageCount > 1;
-    const currentImage = imagesList[currentIndex] || getFallbackImage(product?.category);
-    const imageUrl = getImageUrl(currentImage);
+    const currentImage = imagesList[currentIndex];
+    const imageUrl = getImageUrl(currentImage, product);
     
     const nextImage = (e) => {
       e.preventDefault();
@@ -277,7 +320,7 @@ const ProductGrid = ({
             onError={(e) => {
               setIsLoading(false);
               setHasError(true);
-              e.target.src = getFallbackImage(product?.category);
+              e.target.src = categoryImages[product?.category] || categoryImages['Other'];
             }}
             loading="lazy"
           />
@@ -343,7 +386,7 @@ const ProductGrid = ({
           </div>
         )}
 
-        {/* شارة الفئة */}
+        {/* ✅ شارة الفئة - عرض اسم الفئة بدلاً من الرقم */}
         <div className="absolute top-4 right-4 z-30">
           <div className={`flex items-center gap-2 px-4 py-1.5 rounded-full text-xs font-bold
                         backdrop-blur-xl shadow-2xl border
@@ -441,6 +484,7 @@ const ProductGrid = ({
                 categoryGradient={categoryGradient}
               />
 
+              {/* باقي محتوى البطاقة */}
               <div className="p-6 flex-1 flex flex-col relative">
                 <div className="absolute top-0 left-6 right-6 h-px bg-gradient-to-r from-transparent via-neutral-300 to-transparent dark:via-neutral-600" />
                 
@@ -500,6 +544,7 @@ const ProductGrid = ({
                 )}
 
                 <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-4 mt-auto">
+                  {/* Brand */}
                   <div className={`group/spec relative overflow-hidden rounded-xl p-3
                                 transition-all duration-300 hover:shadow-md hover:-translate-y-0.5
                                 ${darkMode ? 'bg-neutral-700/30 hover:bg-neutral-700/50' : 'bg-neutral-50 hover:bg-neutral-100'}`}>
@@ -518,6 +563,7 @@ const ProductGrid = ({
                     </div>
                   </div>
 
+                  {/* Weight */}
                   <div className={`group/spec relative overflow-hidden rounded-xl p-3
                                 transition-all duration-300 hover:shadow-md hover:-translate-y-0.5
                                 ${darkMode ? 'bg-neutral-700/30 hover:bg-neutral-700/50' : 'bg-neutral-50 hover:bg-neutral-100'}`}>
@@ -536,6 +582,7 @@ const ProductGrid = ({
                     </div>
                   </div>
 
+                  {/* Warranty */}
                   <div className={`group/spec relative overflow-hidden rounded-xl p-3
                                 transition-all duration-300 hover:shadow-md hover:-translate-y-0.5
                                 ${darkMode ? 'bg-neutral-700/30 hover:bg-neutral-700/50' : 'bg-neutral-50 hover:bg-neutral-100'}`}>
@@ -554,6 +601,7 @@ const ProductGrid = ({
                     </div>
                   </div>
 
+                  {/* Dimensions */}
                   <div className={`group/spec relative overflow-hidden rounded-xl p-3
                                 transition-all duration-300 hover:shadow-md hover:-translate-y-0.5
                                 ${darkMode ? 'bg-neutral-700/30 hover:bg-neutral-700/50' : 'bg-neutral-50 hover:bg-neutral-100'}`}>

@@ -21,18 +21,6 @@
         { "key": "Access-Control-Allow-Methods", "value": "GET, OPTIONS" },
         { "key": "Access-Control-Allow-Headers", "value": "X-Requested-With, Content-Type, Authorization" }
       ]
-    },
-    {
-      "source": "/api/(.*)",
-      "headers": [
-        { "key": "Access-Control-Allow-Origin", "value": "*" },
-        { "key": "Access-Control-Allow-Methods", "value": "GET, POST, PUT, DELETE, OPTIONS" },
-        { "key": "Access-Control-Allow-Headers", "value": "X-Requested-With, Content-Type, Authorization" }
-      ]
     }
-  ],
-  "env": {
-    "VITE_API_URL": "https://vigilant-backend-8owb.onrender.com/api",
-    "VITE_MEDIA_URL": "https://vigilant-backend-8owb.onrender.com"
-  }
+  ]
 }

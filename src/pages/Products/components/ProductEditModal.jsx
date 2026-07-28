@@ -2,8 +2,6 @@ import React, { useState, useEffect, useRef } from 'react';
 import { Edit2, X, Save, Upload, ChevronLeft, ChevronRight, Image as ImageIcon, Trash2 } from 'lucide-react';
 
 import { useCategories } from '../../../contexts/CategoryContext';
-// ✅ استيراد الدالة المساعدة من api.js
-import { getImageUrl } from '../../../services/api';
 
 const ProductEditModal = ({ 
   darkMode,
@@ -30,6 +28,8 @@ const ProductEditModal = ({
   const [loading, setLoading] = useState(false);
   const [localNewPreviews, setLocalNewPreviews] = useState([]);
   const carouselRef = useRef(null);
+  
+ 
 
   // تهيئة الصور عند فتح المودال
   useEffect(() => {
@@ -55,12 +55,21 @@ const ProductEditModal = ({
 
   const hasMultipleImages = imagesList.length > 1;
 
-  // ✅ استخدام getImageUrl المستوردة بدلاً من الدالة المكررة
-  const getImageDisplayUrl = (imageField) => {
+  const getImageUrl = (imageField) => {
     if (!imageField) {
       return 'https://images.unsplash.com/photo-1498049794561-7780e7231661?w=400&h=300&fit=crop';
     }
-    return getImageUrl(imageField);
+    
+    if (typeof imageField === 'string') {
+      if (imageField.startsWith('http')) return imageField;
+      if (imageField.startsWith('/media/')) {
+        return `http://localhost:8000${imageField}`;
+      }
+      if (imageField.startsWith('data:')) return imageField;
+      return `http://localhost:8000/media/${imageField.replace(/^\/+/, '')}`;
+    }
+    
+    return 'https://images.unsplash.com/photo-1498049794561-7780e7231661?w=400&h=300&fit=crop';
   };
 
   const nextImage = (e) => {
@@ -76,24 +85,29 @@ const ProductEditModal = ({
   };
 
   const handleRemoveCurrentImageLocal = (index) => {
-    if (handleRemoveCurrentImage) {
-      handleRemoveCurrentImage(index);
-      
-      const updatedImages = imagesList.filter((_, i) => i !== index);
-      setImagesList(updatedImages);
-      
-      if (updatedImages.length === 0) {
-        if (setCurrentProductImage) {
-          setCurrentProductImage(null);
-        }
-        if (handleInputChange) {
-          handleInputChange({ target: { name: 'image', value: null } });
-        }
-      } else if (index === activeImageIndex) {
-        setActiveImageIndex(0);
+  if (handleRemoveCurrentImage) {
+    handleRemoveCurrentImage(index);
+    
+    // ✅ ✅ ✅ تحديث قائمة الصور محلياً
+    const updatedImages = imagesList.filter((_, i) => i !== index);
+    setImagesList(updatedImages);
+    
+    // ✅ ✅ ✅ إذا لم يتبقى صور، قم بتحديث الصورة الرئيسية
+    if (updatedImages.length === 0) {
+      // ✅ إعلام الـ parent بأنه لا توجد صورة رئيسية
+      if (setCurrentProductImage) {
+        setCurrentProductImage(null);
       }
+      // ✅ تحديث الحقل image في الـ form
+      if (handleInputChange) {
+        handleInputChange({ target: { name: 'image', value: null } });
+      }
+    } else if (index === activeImageIndex) {
+      // ✅ إذا تم حذف الصورة النشطة، حدد الصورة الأولى كصورة نشطة
+      setActiveImageIndex(0);
     }
-  };
+  }
+};
 
   const handleRemoveNewImageLocal = (index) => {
     if (handleRemoveNewImage) {
@@ -116,13 +130,14 @@ const ProductEditModal = ({
   };
 
   useEffect(() => {
-    if (imagesList.length > 0 && !currentProductImage) {
-      const firstImage = imagesList[0];
-      if (firstImage && setCurrentProductImage) {
-        setCurrentProductImage(firstImage);
-      }
+  if (imagesList.length > 0 && !currentProductImage) {
+    // ✅ إذا كانت هناك صور ولم تكن هناك صورة رئيسية، استخدم الأولى
+    const firstImage = imagesList[0];
+    if (firstImage && setCurrentProductImage) {
+      setCurrentProductImage(firstImage);
     }
-  }, [imagesList, currentProductImage, setCurrentProductImage]);
+  }
+}, [imagesList, currentProductImage, setCurrentProductImage]);
 
   const handleNewImageUploadLocal = (e) => {
     const files = Array.from(e.target.files);
@@ -175,71 +190,73 @@ const ProductEditModal = ({
     handleInputChange(e);
   };
 
-  const onSubmit = async (e) => {
-    e.preventDefault();
-    setLoading(true);
+const onSubmit = async (e) => {
+  e.preventDefault();
+  setLoading(true);
 
-    try {
-      const formData = new FormData();
-      
-      formData.append('name', String(editForm.name || ''));
-      formData.append('description', String(editForm.description || ''));
-      formData.append('price', String(editForm.price || '0'));
-      formData.append('quantity', String(editForm.quantity || '0'));
-      formData.append('category', String(editForm.category || ''));
-      formData.append('sku', String(editForm.sku || ''));
-      formData.append('weight', String(editForm.weight || ''));
-      formData.append('dimensions', String(editForm.dimensions || ''));
-      formData.append('manufacturer', String(editForm.manufacturer || ''));
-      const wm = editForm.warranty_months;
-      formData.append('warranty_months', (wm === null || wm === undefined || wm === '') ? '' : String(wm));
-      
-      const tagsValue = editForm.tags || '';
-      if (tagsValue.trim() !== '') {
-        const tagsArray = tagsValue.split(',').map(tag => tag.trim()).filter(tag => tag);
-        formData.append('tags', JSON.stringify(tagsArray));
-      } else {
-        formData.append('tags', JSON.stringify([]));
-      }
-      
-      formData.append('featured', editForm.featured ? 'true' : 'false');
-      formData.append('in_stock', editForm.in_stock ? 'true' : 'false');
-      
-      if (imagesList.length > 0) {
-        const normalized = imagesList.map((img) => {
-          if (!img || typeof img !== 'string') return img;
-          const mediaIndex = img.indexOf('/media/');
-          if (mediaIndex !== -1) {
-            return img.substring(mediaIndex + '/media/'.length);
-          }
-          if (img.startsWith('/media/')) {
-            return img.replace(/^\/media\//, '');
-          }
-          return img;
-        });
-        formData.append('images', JSON.stringify(normalized));
-      } else {
-        formData.append('images', JSON.stringify([]));
-      }
-
-      if (newImages.length > 0) {
-        for (let i = 0; i < newImages.length; i++) {
-          formData.append('images', newImages[i]);
-        }
-      }
-      
-      await handleUpdate(formData);
-      
-      window.dispatchEvent(new Event('product-updated'));
-      window.dispatchEvent(new Event('inventory-updated'));
-      
-    } catch (error) {
-      console.error('خطأ:', error);
-      alert('فشل التحديث: ' + (error.response?.data?.message || error.message));
-    } finally {
-      setLoading(false);
+  try {
+    const formData = new FormData();
+    
+    formData.append('name', String(editForm.name || ''));
+    formData.append('description', String(editForm.description || ''));
+    formData.append('price', String(editForm.price || '0'));
+    formData.append('quantity', String(editForm.quantity || '0'));
+    formData.append('category', String(editForm.category || ''));
+    formData.append('sku', String(editForm.sku || ''));
+    formData.append('weight', String(editForm.weight || ''));
+    formData.append('dimensions', String(editForm.dimensions || ''));
+    formData.append('manufacturer', String(editForm.manufacturer || ''));
+    const wm = editForm.warranty_months;
+    formData.append('warranty_months', (wm === null || wm === undefined || wm === '') ? '' : String(wm));
+    
+    const tagsValue = editForm.tags || '';
+    if (tagsValue.trim() !== '') {
+      const tagsArray = tagsValue.split(',').map(tag => tag.trim()).filter(tag => tag);
+      formData.append('tags', JSON.stringify(tagsArray));
+    } else {
+      formData.append('tags', JSON.stringify([]));
     }
-  };
+    
+    formData.append('featured', editForm.featured ? 'true' : 'false');
+    formData.append('in_stock', editForm.in_stock ? 'true' : 'false');
+    
+    if (imagesList.length > 0) {
+      const normalized = imagesList.map((img) => {
+        if (!img || typeof img !== 'string') return img;
+        const mediaIndex = img.indexOf('/media/');
+        if (mediaIndex !== -1) {
+          return img.substring(mediaIndex + '/media/'.length);
+        }
+        if (img.startsWith('/media/')) {
+          return img.replace(/^\/media\//, '');
+        }
+        return img;
+      });
+      formData.append('images', JSON.stringify(normalized));
+    } else {
+      formData.append('images', JSON.stringify([]));
+    }
+
+    if (newImages.length > 0) {
+      for (let i = 0; i < newImages.length; i++) {
+        formData.append('images', newImages[i]);
+      }
+    }
+    
+    // ✅ ✅ ✅ استدعاء handleUpdate من الـ parent
+    await handleUpdate(formData);
+    
+    // ✅ ✅ ✅ إطلاق الأحداث بعد نجاح التحديث
+    window.dispatchEvent(new Event('product-updated'));
+    window.dispatchEvent(new Event('inventory-updated'));
+    
+  } catch (error) {
+    console.error('خطأ:', error);
+    alert('فشل التحديث: ' + (error.response?.data?.message || error.message));
+  } finally {
+    setLoading(false);
+  }
+};
 
   return (
     <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 p-4 animate-fade-in-up">
@@ -309,26 +326,28 @@ const ProductEditModal = ({
                     
                     <div>
                       <label className={`block text-sm font-medium mb-2 ${darkMode ? 'text-neutral-300' : 'text-neutral-700'}`}>Category</label>
-                      <select
-                        name="category"
-                        value={editForm.category || ''}
-                        onChange={handleInputChange}
-                        className={`w-full px-4 py-3 rounded-xl focus:outline-none focus:ring-2 transition-all appearance-none
-                                  ${darkMode 
-                                    ? 'bg-neutral-700 border-neutral-600 text-neutral-200 focus:ring-[#8B7ABA]' 
-                                    : 'bg-white border-neutral-300 focus:ring-[#8B7ABA]'}`}
-                      >
-                        <option value="">Select Category</option>
-                        {categoriesList.map((category) => {
-                          const categoryId = category.id;
-                          const categoryName = category.name || `Category ${categoryId}`;
-                          return (
-                            <option key={categoryId} value={categoryId}>
-                              {categoryName}
-                            </option>
-                          );
-                        })}
-                      </select>
+                      
+<select
+  name="category"
+  value={editForm.category || ''}
+  onChange={handleInputChange}
+  className={`w-full px-4 py-3 rounded-xl focus:outline-none focus:ring-2 transition-all appearance-none
+            ${darkMode 
+              ? 'bg-neutral-700 border-neutral-600 text-neutral-200 focus:ring-[#8B7ABA]' 
+              : 'bg-white border-neutral-300 focus:ring-[#8B7ABA]'}`}
+>
+  <option value="">Select Category</option>
+  {categoriesList.map((category) => {
+    
+    const categoryId = category.id;
+    const categoryName = category.name || `Category ${categoryId}`;
+    return (
+      <option key={categoryId} value={categoryId}>
+        {categoryName}
+      </option>
+    );
+  })}
+</select>
                     </div>
                   </div>
                   
@@ -369,7 +388,7 @@ const ProductEditModal = ({
                         {/* Main image display */}
                         <div className="relative bg-neutral-100 dark:bg-neutral-900 rounded-xl overflow-hidden">
                           <img 
-                            src={getImageDisplayUrl(imagesList[activeImageIndex])} 
+                            src={getImageUrl(imagesList[activeImageIndex])} 
                             alt={`Product ${activeImageIndex + 1}`} 
                             className="w-full h-64 object-contain transition-all duration-500"
                           />
@@ -444,7 +463,7 @@ const ProductEditModal = ({
                                             : 'opacity-60 hover:opacity-100'}`}
                               >
                                 <img 
-                                  src={getImageDisplayUrl(img)} 
+                                  src={getImageUrl(img)} 
                                   alt={`Thumbnail ${idx + 1}`}
                                   className="w-full h-full object-cover"
                                 />

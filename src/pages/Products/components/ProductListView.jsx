@@ -25,9 +25,6 @@ import {
   FolderTree
 } from 'lucide-react';
 
-// ✅ استيراد الدوال المساعدة من api.js
-import { getImageUrl, getFallbackImage } from '../../../services/api';
-
 const ProductListView = ({ 
   darkMode, 
   products, 
@@ -37,24 +34,27 @@ const ProductListView = ({
   getCategoryIcon,
   getCategoryColorClass 
 }) => {
+  // الألوان المحددة - البنفسجي هو اللون الأساسي
   const colors = {
-    primary: '#8B7ABA',
-    secondary: '#F08FAE',
-    accent: '#EE9C6C',
-    success: '#34D19C'
+    primary: '#8B7ABA', // بنفسجي (أساسي)
+    secondary: '#F08FAE', // وردي
+    accent: '#EE9C6C', // برتقالي
+    success: '#34D19C' // أخضر
   };
 
-  // دالة للحصول على اسم الفئة
+  // ✅ دالة للحصول على اسم الفئة (محسنة)
   const getCategoryNameDisplay = (categoryId) => {
     if (getCategoryName) {
       const name = getCategoryName(categoryId);
       if (name) return name;
     }
     
+    // fallback: إذا كان categoryId هو اسم بالفعل
     if (typeof categoryId === 'string' && !categoryId.match(/^\d+$/)) {
       return categoryId;
     }
     
+    // أسماء افتراضية للأرقام
     const categoryNames = {
       '1': 'Electronics',
       '2': 'Clothing',
@@ -68,7 +68,7 @@ const ProductListView = ({
     return categoryNames[categoryId] || 'Other';
   };
 
-  // دالة للحصول على أيقونة الفئة
+  // ✅ دالة للحصول على أيقونة الفئة (محسنة)
   const getCategoryIconComponent = (categoryId, size = 16) => {
     if (getCategoryIcon) {
       const icon = getCategoryIcon(categoryId, size);
@@ -103,7 +103,7 @@ const ProductListView = ({
     return icons[categoryNames[categoryId]] || <FolderTree size={size} style={{ color: colors.primary }} />;
   };
 
-  // دالة للحصول على لون الفئة
+  // ✅ دالة للحصول على لون الفئة (محسنة)
   const getCategoryColorDisplay = (categoryId) => {
     if (getCategoryColorClass) {
       const color = getCategoryColorClass(categoryId);
@@ -169,6 +169,29 @@ const ProductListView = ({
     }
   };
 
+  const getImageUrl = (product) => {
+    if (product?.image) {
+      if (typeof product.image === 'string') {
+        if (product.image.startsWith('http')) return product.image;
+        return `http://localhost:8000/media/${product.image}`;
+      }
+    }
+    
+    // صور افتراضية لكل فئة
+    const defaultImages = {
+      'Electronics': 'https://images.unsplash.com/photo-1550009158-9ebf69173e03?w=100&h=100&fit=crop',
+      'Clothing': 'https://images.unsplash.com/photo-1441984904996-e0b6ba687e04?w=100&h=100&fit=crop',
+      'Home & Garden': 'https://images.unsplash.com/photo-1583847268964-b28dc8f51f92?w=100&h=100&fit=crop',
+      'Books': 'https://images.unsplash.com/photo-1524995997946-a1c2e315a42f?w=100&h=100&fit=crop',
+      'Sports': 'https://images.unsplash.com/photo-1517466787929-bc90951d0974?w=100&h=100&fit=crop',
+      'Health': 'https://images.unsplash.com/photo-1505751172876-fa1923c5c528?w=100&h=100&fit=crop',
+      'Beauty': 'https://images.unsplash.com/photo-1596462502278-27bfdc403348?w=100&h=100&fit=crop',
+      'Other': 'https://images.unsplash.com/photo-1472851294608-062f824d29cc?w=100&h=100&fit=crop'
+    };
+    
+    return defaultImages[product?.category] || defaultImages['Other'];
+  };
+
   if (!products || products.length === 0) {
     return (
       <div className={`rounded-2xl border p-16 text-center ${
@@ -215,9 +238,8 @@ const ProductListView = ({
           <tbody className={`divide-y ${darkMode ? 'divide-neutral-700' : 'divide-neutral-200'}`}>
             {products.map((product, index) => {
               const stockStatus = getStockStatus(product.quantity);
-              // ✅ استخدام getImageUrl المستوردة
-              const imageUrl = getImageUrl(product?.images?.[0] || product?.image);
-              const fallbackImage = getFallbackImage(product?.category);
+              const imageUrl = getImageUrl(product);
+              // ✅ استخدام الدوال المحسنة للحصول على اسم الفئة وأيقونتها ولونها
               const categoryName = getCategoryNameDisplay(product.category);
               const categoryIcon = getCategoryIconComponent(product.category, 16);
               const categoryColor = getCategoryColorDisplay(product.category);
@@ -234,18 +256,17 @@ const ProductListView = ({
                 >
                   <td className="py-4 px-6">
                     <div className="flex items-center gap-4">
+                      {/* Product Image */}
                       <div className={`relative w-14 h-14 rounded-xl overflow-hidden flex-shrink-0
                         ${darkMode ? 'bg-neutral-700' : 'bg-gradient-to-br from-neutral-100 to-neutral-200'}`}>
                         <img 
-                          src={imageUrl || fallbackImage}
+                          src={imageUrl} 
                           alt={product.name}
                           className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-110"
                           loading="lazy"
-                          onError={(e) => {
-                            e.target.src = fallbackImage;
-                          }}
                         />
                         
+                        {/* Featured Badge */}
                         {product.featured && (
                           <div className="absolute -top-1 -right-1 w-5 h-5 rounded-full flex items-center justify-center shadow-lg"
                                style={{ background: `linear-gradient(135deg, ${colors.accent}, ${colors.secondary})` }}>
@@ -254,6 +275,7 @@ const ProductListView = ({
                         )}
                       </div>
                       
+                      {/* Product Info */}
                       <div>
                         <div className={`font-bold flex items-center gap-2 ${darkMode ? 'text-white' : 'text-neutral-900'}`}>
                           {product.name}
@@ -284,6 +306,7 @@ const ProductListView = ({
                     </div>
                   </td>
                   
+                  {/* ✅ Category - عرض اسم الفئة بدلاً من الرقم */}
                   <td className="py-4 px-6">
                     <div className={`inline-flex items-center gap-2 px-3 py-1.5 ${categoryColor} rounded-lg text-sm font-medium`}>
                       {categoryIcon}
@@ -291,12 +314,14 @@ const ProductListView = ({
                     </div>
                   </td>
                   
+                  {/* Price */}
                   <td className="py-4 px-6">
                     <div className={`text-lg font-bold`} style={{ color: colors.primary }}>
                       {formatPrice(product.price)}
                     </div>
                   </td>
                   
+                  {/* Stock */}
                   <td className="py-4 px-6">
                     <div className="flex items-center gap-3">
                       <div className={`font-bold ${darkMode ? 'text-white' : 'text-neutral-900'}`}>
@@ -315,6 +340,7 @@ const ProductListView = ({
                     </div>
                   </td>
                   
+                  {/* Status */}
                   <td className="py-4 px-6">
                     <div className={`inline-flex items-center gap-2 px-3 py-1.5 ${stockStatus.badge} rounded-lg text-sm font-medium`}>
                       {stockStatus.icon}
@@ -322,6 +348,7 @@ const ProductListView = ({
                     </div>
                   </td>
                   
+                  {/* Actions */}
                   <td className="py-4 px-6">
                     <div className="flex items-center gap-2">
                       <button
