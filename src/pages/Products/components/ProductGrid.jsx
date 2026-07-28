@@ -122,19 +122,23 @@ const ProductGrid = ({
 
   // دالة محسنة لجلب URL الصورة
   const getImageUrl = (image, product) => {
-    if (!image) {
-      return categoryImages[product?.category] || categoryImages['Other'];
-    }
-    if (typeof image === 'string') {
-      if (image.startsWith('http')) return image;
-      if (image.startsWith('/media/')) {
-        return `http://localhost:8000${image}`;
-      }
-      if (image.startsWith('data:')) return image;
-      return `http://localhost:8000/media/${image.replace(/^\/+/, '')}`;
-    }
+  if (!image) {
     return categoryImages[product?.category] || categoryImages['Other'];
-  };
+  }
+  if (typeof image === 'string') {
+    if (image.startsWith('http')) return image;
+    if (image.startsWith('/media/')) {
+      // ✅ استخدم الرابط الكامل للـ Backend
+      const baseUrl = import.meta.env.VITE_API_URL.replace('/api', '');
+      return `${baseUrl}${image}`;
+    }
+    if (image.startsWith('data:')) return image;
+    // ✅ استخدم الرابط الكامل للـ Backend
+    const baseUrl = import.meta.env.VITE_API_URL.replace('/api', '');
+    return `${baseUrl}/media/${image.replace(/^\/+/, '')}`;
+  }
+  return categoryImages[product?.category] || categoryImages['Other'];
+};
 
   // ✅ دالة للحصول على أيقونة الفئة (محسنة)
   const getCategoryIconComponent = (categoryId, size = 16) => {
