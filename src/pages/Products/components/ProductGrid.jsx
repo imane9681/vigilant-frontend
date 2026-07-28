@@ -39,21 +39,37 @@ const ProductGrid = ({
 }) => {
   const [activeImageIndex, setActiveImageIndex] = useState({});
 
-  // تشخيص البيانات
-  useEffect(() => {
-    if (products && products.length > 0) {
-      products.forEach((product, index) => {
-        
-      });
-    }
-  }, [products]);
-
   const colors = {
     primary: '#8B7ABA',
     secondary: '#F08FAE',
     accent: '#EE9C6C',
     success: '#34D19C',
     gradient: 'linear-gradient(135deg, #8B7ABA 0%, #F08FAE 50%, #EE9C6C 100%)'
+  };
+
+  // ✅ ✅ ✅ صور افتراضية حسب الفئة
+  const getFallbackImage = (category) => {
+    const fallbackImages = {
+      'Electronics': 'https://images.unsplash.com/photo-1550009158-9ebf69173e03?w=400&h=300&fit=crop',
+      'Clothing': 'https://images.unsplash.com/photo-1441984904996-e0b6ba687e04?w=400&h=300&fit=crop',
+      'Home & Garden': 'https://images.unsplash.com/photo-1583847268964-b28dc8f51f92?w=400&h=300&fit=crop',
+      'Books': 'https://images.unsplash.com/photo-1524995997946-a1c2e315a42f?w=400&h=300&fit=crop',
+      'Sports': 'https://images.unsplash.com/photo-1517466787929-bc90951d0974?w=400&h=300&fit=crop',
+      'Health': 'https://images.unsplash.com/photo-1505751172876-fa1923c5c528?w=400&h=300&fit=crop',
+      'Beauty': 'https://images.unsplash.com/photo-1596462502278-27bfdc403348?w=400&h=300&fit=crop',
+      'Other': 'https://images.unsplash.com/photo-1472851294608-062f824d29cc?w=400&h=300&fit=crop'
+    };
+    
+    const getCategoryName = (cat) => {
+      if (typeof cat === 'string' && cat.match(/^\d+$/)) {
+        const names = { '1': 'Electronics', '2': 'Clothing', '3': 'Books',
+                        '4': 'Home & Garden', '5': 'Sports', '6': 'Health', '7': 'Beauty' };
+        return names[cat] || 'Other';
+      }
+      return cat || 'Other';
+    };
+    
+    return fallbackImages[getCategoryName(category)] || fallbackImages['Other'];
   };
 
   const categoryImages = {
@@ -104,39 +120,47 @@ const ProductGrid = ({
     }
   };
 
-  // دالة لجلب جميع صور المنتج
+  // ✅ ✅ ✅ دالة محسنة لجلب جميع صور المنتج
   const getProductImages = (product) => {
+    console.log('🔍 getProductImages called for:', product?.name);
+    console.log('  → product.images:', product?.images);
+    
     if (product?.images && Array.isArray(product.images) && product.images.length > 0) {
+      console.log('  ✅ Using product.images:', product.images);
       return product.images;
     }
+    
+    // ✅ إذا كان هناك حقل image (للتوافق مع الإصدارات القديمة)
     if (product?.image && typeof product.image === 'string') {
+      console.log('  ✅ Using product.image:', product.image);
       return [product.image];
     }
-    if (product?.image_url && typeof product.image_url === 'string') {
-      return [product.image_url];
-    }
-    return [categoryImages[product?.category] || categoryImages['Other']];
+    
+    console.log('  ⚠️ No images found, using fallback');
+    return [getFallbackImage(product?.category)];
   };
 
-  // ✅ ✅ ✅ الدالة الرئيسية - تعمل محلياً وفي الإنتاج
+  // ✅ ✅ ✅ الدالة الرئيسية لبناء رابط الصورة
   const getImageUrl = (image, product) => {
-    // إذا لم توجد صورة، استخدم الصورة الافتراضية
+    console.log('🖼️ getImageUrl called:', { image, productName: product?.name });
+    
     if (!image) {
-      return categoryImages[product?.category] || categoryImages['Other'];
+      const fallback = getFallbackImage(product?.category);
+      console.log('  → No image, using fallback:', fallback);
+      return fallback;
     }
     
     if (typeof image === 'string') {
-      // صورة من الإنترنت (HTTP/HTTPS)
       if (image.startsWith('http://') || image.startsWith('https://')) {
+        console.log('  → Using HTTP URL:', image);
         return image;
       }
       
-      // Data URL (base64)
       if (image.startsWith('data:')) {
+        console.log('  → Using Data URL');
         return image;
       }
       
-      // تنظيف المسار - إزالة /media/ من البداية إذا وجدت
       let cleanPath = image;
       if (cleanPath.startsWith('/media/')) {
         cleanPath = cleanPath.substring(6);
@@ -145,17 +169,16 @@ const ProductGrid = ({
       }
       cleanPath = cleanPath.replace(/^\/+/, '');
       
-      // ✅ ✅ ✅ الفرق بين المحلي والإنتاج
-      // في الإنتاج: استخدم المسار النسبي (Vercel Rewrite سيتعامل معها)
-      // محلياً: استخدم localhost:8000
-      const isProduction = import.meta.env.PROD;
-      const baseUrl = isProduction ? '' : 'http://localhost:8000';
+      // ✅ استخدام localhost محلياً
+      const baseUrl = 'http://localhost:8000';
       const finalUrl = `${baseUrl}/media/${cleanPath}`;
-      
+      console.log('  → Final URL:', finalUrl);
       return finalUrl;
     }
     
-    return categoryImages[product?.category] || categoryImages['Other'];
+    const fallback = getFallbackImage(product?.category);
+    console.log('  → Invalid image type, using fallback:', fallback);
+    return fallback;
   };
 
   // دالة للحصول على أيقونة الفئة
@@ -276,14 +299,16 @@ const ProductGrid = ({
     const [imagesList, setImagesList] = useState([]);
     
     useEffect(() => {
+      console.log('🔄 ProductImage useEffect for:', product?.name);
       const images = getProductImages(product);
+      console.log('  → images list:', images);
       setImagesList(images);
       setCurrentIndex(0);
     }, [product]);
     
     const imageCount = imagesList.length;
     const hasMultipleImages = imageCount > 1;
-    const currentImage = imagesList[currentIndex];
+    const currentImage = imagesList[currentIndex] || getFallbackImage(product?.category);
     const imageUrl = getImageUrl(currentImage, product);
     
     const nextImage = (e) => {
@@ -331,13 +356,17 @@ const ProductGrid = ({
               objectPosition: 'center'
             }}
             onLoad={() => {
+              console.log('✅ Image loaded:', imageUrl);
               setIsLoading(false);
               setHasError(false);
             }}
             onError={(e) => {
+              console.error('❌ Image failed to load:', imageUrl);
               setIsLoading(false);
               setHasError(true);
-              e.target.src = categoryImages[product?.category] || categoryImages['Other'];
+              const fallback = getFallbackImage(product?.category);
+              console.log('  → Using fallback:', fallback);
+              e.target.src = fallback;
             }}
             loading="lazy"
           />
