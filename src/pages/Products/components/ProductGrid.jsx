@@ -47,7 +47,7 @@ const ProductGrid = ({
     gradient: 'linear-gradient(135deg, #8B7ABA 0%, #F08FAE 50%, #EE9C6C 100%)'
   };
 
-  // ✅ ✅ ✅ صور افتراضية حسب الفئة
+  // ✅ صور افتراضية حسب الفئة
   const getFallbackImage = (category) => {
     const fallbackImages = {
       'Electronics': 'https://images.unsplash.com/photo-1550009158-9ebf69173e03?w=400&h=300&fit=crop',
@@ -120,44 +120,29 @@ const ProductGrid = ({
     }
   };
 
-  // ✅ ✅ ✅ دالة محسنة لجلب جميع صور المنتج
+  // ✅ دالة لجلب جميع صور المنتج
   const getProductImages = (product) => {
-    console.log('🔍 getProductImages called for:', product?.name);
-    console.log('  → product.images:', product?.images);
-    
     if (product?.images && Array.isArray(product.images) && product.images.length > 0) {
-      console.log('  ✅ Using product.images:', product.images);
       return product.images;
     }
-    
-    // ✅ إذا كان هناك حقل image (للتوافق مع الإصدارات القديمة)
     if (product?.image && typeof product.image === 'string') {
-      console.log('  ✅ Using product.image:', product.image);
       return [product.image];
     }
-    
-    console.log('  ⚠️ No images found, using fallback');
     return [getFallbackImage(product?.category)];
   };
 
-  // ✅ ✅ ✅ الدالة الرئيسية لبناء رابط الصورة
+  // ✅ ✅ ✅ الدالة الرئيسية - تعمل محلياً وفي الإنتاج
   const getImageUrl = (image, product) => {
-    console.log('🖼️ getImageUrl called:', { image, productName: product?.name });
-    
     if (!image) {
-      const fallback = getFallbackImage(product?.category);
-      console.log('  → No image, using fallback:', fallback);
-      return fallback;
+      return getFallbackImage(product?.category);
     }
     
     if (typeof image === 'string') {
       if (image.startsWith('http://') || image.startsWith('https://')) {
-        console.log('  → Using HTTP URL:', image);
         return image;
       }
       
       if (image.startsWith('data:')) {
-        console.log('  → Using Data URL');
         return image;
       }
       
@@ -169,16 +154,16 @@ const ProductGrid = ({
       }
       cleanPath = cleanPath.replace(/^\/+/, '');
       
-      // ✅ استخدام localhost محلياً
-      const baseUrl = 'http://localhost:8000';
-      const finalUrl = `${baseUrl}/media/${cleanPath}`;
-      console.log('  → Final URL:', finalUrl);
-      return finalUrl;
+      // ✅ ✅ ✅ الفرق بين المحلي والإنتاج
+      const isProduction = import.meta.env.PROD;
+      const baseUrl = isProduction 
+        ? 'https://vigilant-backend-8owb.onrender.com' 
+        : 'http://localhost:8000';
+      
+      return `${baseUrl}/media/${cleanPath}`;
     }
     
-    const fallback = getFallbackImage(product?.category);
-    console.log('  → Invalid image type, using fallback:', fallback);
-    return fallback;
+    return getFallbackImage(product?.category);
   };
 
   // دالة للحصول على أيقونة الفئة
@@ -299,9 +284,7 @@ const ProductGrid = ({
     const [imagesList, setImagesList] = useState([]);
     
     useEffect(() => {
-      console.log('🔄 ProductImage useEffect for:', product?.name);
       const images = getProductImages(product);
-      console.log('  → images list:', images);
       setImagesList(images);
       setCurrentIndex(0);
     }, [product]);
@@ -356,17 +339,13 @@ const ProductGrid = ({
               objectPosition: 'center'
             }}
             onLoad={() => {
-              console.log('✅ Image loaded:', imageUrl);
               setIsLoading(false);
               setHasError(false);
             }}
             onError={(e) => {
-              console.error('❌ Image failed to load:', imageUrl);
               setIsLoading(false);
               setHasError(true);
-              const fallback = getFallbackImage(product?.category);
-              console.log('  → Using fallback:', fallback);
-              e.target.src = fallback;
+              e.target.src = getFallbackImage(product?.category);
             }}
             loading="lazy"
           />

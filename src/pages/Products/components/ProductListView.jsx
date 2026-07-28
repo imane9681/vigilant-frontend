@@ -42,7 +42,7 @@ const ProductListView = ({
     success: '#34D19C'
   };
 
-  // ✅ ✅ ✅ صور افتراضية حسب الفئة
+  // ✅ صور افتراضية حسب الفئة
   const getFallbackImage = (category) => {
     const fallbackImages = {
       'Electronics': 'https://images.unsplash.com/photo-1550009158-9ebf69173e03?w=100&h=100&fit=crop',
@@ -192,9 +192,8 @@ const ProductListView = ({
     }
   };
 
-  // ✅ ✅ ✅ الدالة الرئيسية لبناء رابط الصورة (محسنة)
+  // ✅ ✅ ✅ الدالة الرئيسية - تعمل محلياً وفي الإنتاج
   const getImageUrl = (product) => {
-    // دالة مساعدة لتنسيق مسار الصورة
     const formatImage = (path) => {
       if (!path) return null;
       
@@ -214,12 +213,16 @@ const ProductListView = ({
       }
       cleanPath = cleanPath.replace(/^\/+/, '');
       
-      // ✅ استخدام الـ Backend URL مباشرة
-      const baseUrl = 'https://vigilant-backend-8owb.onrender.com';
+      // ✅ ✅ ✅ الفرق بين المحلي والإنتاج
+      const isProduction = import.meta.env.PROD;
+      const baseUrl = isProduction 
+        ? 'https://vigilant-backend-8owb.onrender.com' 
+        : 'http://localhost:8000';
+      
       return `${baseUrl}/media/${cleanPath}`;
     };
     
-    // ✅ البحث عن الصورة في images فقط (أول صورة)
+    // ✅ البحث عن الصورة في images (أول صورة)
     const imagePath = product?.images?.[0];
     
     if (imagePath) {
@@ -227,7 +230,6 @@ const ProductListView = ({
       if (formatted) return formatted;
     }
     
-    // ✅ إذا لم توجد صورة، استخدم الصورة الافتراضية
     return getFallbackImage(product?.category);
   };
 
