@@ -4,6 +4,63 @@ import axios from 'axios';
 const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:8000/api';
 export const MEDIA_URL = import.meta.env.VITE_MEDIA_URL || 'http://localhost:8000';
 
+/**
+ * دالة مساعدة للحصول على URL الصورة
+ * تعمل في كل من المحلي والإنتاج
+ */
+export const getImageUrl = (path) => {
+  if (!path) return null;
+  
+  // ✅ إذا كان المسار رابطاً كاملاً (HTTP/HTTPS)
+  if (path.startsWith('http://') || path.startsWith('https://')) {
+    return path;
+  }
+  
+  // ✅ إذا كان المسار بصيغة data:
+  if (path.startsWith('data:')) {
+    return path;
+  }
+  
+  // ✅ تنظيف المسار
+  let cleanPath = path;
+  if (cleanPath.startsWith('/media/')) {
+    cleanPath = cleanPath.substring(6);
+  } else if (cleanPath.startsWith('media/')) {
+    cleanPath = cleanPath.substring(6);
+  }
+  cleanPath = cleanPath.replace(/^\/+/, '');
+  
+  // ✅ استخدام MEDIA_URL من متغيرات البيئة
+  const baseUrl = MEDIA_URL.endsWith('/') ? MEDIA_URL.slice(0, -1) : MEDIA_URL;
+  return `${baseUrl}/media/${cleanPath}`;
+};
+
+/**
+ * دالة مساعدة للحصول على صورة افتراضية حسب الفئة
+ */
+export const getFallbackImage = (category) => {
+  const fallbackImages = {
+    'Electronics': 'https://images.unsplash.com/photo-1550009158-9ebf69173e03?w=400&h=300&fit=crop',
+    'Clothing': 'https://images.unsplash.com/photo-1441984904996-e0b6ba687e04?w=400&h=300&fit=crop',
+    'Home & Garden': 'https://images.unsplash.com/photo-1583847268964-b28dc8f51f92?w=400&h=300&fit=crop',
+    'Books': 'https://images.unsplash.com/photo-1524995997946-a1c2e315a42f?w=400&h=300&fit=crop',
+    'Sports': 'https://images.unsplash.com/photo-1517466787929-bc90951d0974?w=400&h=300&fit=crop',
+    'Health': 'https://images.unsplash.com/photo-1505751172876-fa1923c5c528?w=400&h=300&fit=crop',
+    'Beauty': 'https://images.unsplash.com/photo-1596462502278-27bfdc403348?w=400&h=300&fit=crop',
+    'Other': 'https://images.unsplash.com/photo-1472851294608-062f824d29cc?w=400&h=300&fit=crop'
+  };
+  
+  const getCategoryName = (cat) => {
+    if (typeof cat === 'string' && cat.match(/^\d+$/)) {
+      const names = { '1': 'Electronics', '2': 'Clothing', '3': 'Books',
+                      '4': 'Home & Garden', '5': 'Sports', '6': 'Health', '7': 'Beauty' };
+      return names[cat] || 'Other';
+    }
+    return cat || 'Other';
+  };
+  
+  return fallbackImages[getCategoryName(category)] || fallbackImages['Other'];
+};
 
 const api = axios.create({
   baseURL: API_URL,
@@ -107,11 +164,6 @@ export const terminateOtherSessions = async () => {
   }
 };
 
-
-// ============================================================
-// ✅ دوال إدارة الجلسات المتقدمة (دوال مساعدة)
-// ============================================================
-
 /**
  * تنظيف الجلسات المنتهية وغير النشطة
  */
@@ -188,19 +240,14 @@ export const authService = {
   login: (email, password) => {
     return api.post('/auth/login/', { email, password })
       .then(async (response) => {
-        // ✅ تحديث localStorage
         localStorage.setItem('access_token', response.data.access);
         localStorage.setItem('refresh_token', response.data.refresh);
         localStorage.setItem('user', JSON.stringify(response.data.user));
         localStorage.setItem('isAuthenticated', 'true');
         
-        // ✅ ✅ ✅ إنشاء جلسة وإنهاء الجلسات الأخرى
         try {
-          // 1. إنشاء جلسة للمستخدم الحالي
           await createSession();
           console.log('✅ Session created for current user');
-          
-          // 2. إنهاء جميع الجلسات الأخرى
           await terminateOtherSessions();
           console.log('✅ Other sessions terminated');
         } catch (sessionError) {
@@ -329,23 +376,20 @@ export const settingsService = {
   updateSecurity: (data) => api.patch('/settings/security/', data),
 };
 
-
 // ========== خدمات قاعدة البيانات ==========
 export const databaseService = {
-    getStats: () => api.get('/database/stats/'),
-    getTables: () => api.get('/database/tables/'),
-    getBackups: () => api.get('/database/backups/'),
-    createBackup: () => api.post('/database/create_backup/'),
-    deleteBackup: (id) => api.delete(`/database/${id}/delete_backup/`),
-    downloadBackup: (id) => api.get(`/database/${id}/download_backup/`, { responseType: 'blob' }),
-    restoreBackup: (id) => api.post(`/database/${id}/restore_backup/`),
-    getTableDetails: (tableName) => api.get(`/database/table_details/?table_name=${tableName}`),
-    getQueryStats: () => api.get('/database/query_stats/'),
-    executeQuery: (query) => api.post('/database/execute_query/', { query }),
-    clearLogs: (days) => api.post('/database/clear_logs/', { days }),
-    
-    // ✅ ✅ ✅ تصحيح دالة حذف سجل الاستعلام
-    deleteQueryLog: (id) => api.delete(`/database/${id}/delete_query_log/`),
+  getStats: () => api.get('/database/stats/'),
+  getTables: () => api.get('/database/tables/'),
+  getBackups: () => api.get('/database/backups/'),
+  createBackup: () => api.post('/database/create_backup/'),
+  deleteBackup: (id) => api.delete(`/database/${id}/delete_backup/`),
+  downloadBackup: (id) => api.get(`/database/${id}/download_backup/`, { responseType: 'blob' }),
+  restoreBackup: (id) => api.post(`/database/${id}/restore_backup/`),
+  getTableDetails: (tableName) => api.get(`/database/table_details/?table_name=${tableName}`),
+  getQueryStats: () => api.get('/database/query_stats/'),
+  executeQuery: (query) => api.post('/database/execute_query/', { query }),
+  clearLogs: (days) => api.post('/database/clear_logs/', { days }),
+  deleteQueryLog: (id) => api.delete(`/database/${id}/delete_query_log/`),
 };
 
 export default api;

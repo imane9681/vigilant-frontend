@@ -7,6 +7,9 @@ import {
   ExternalLink, Info, ShoppingBag, TruckIcon
 } from 'lucide-react';
 
+// ✅ استيراد الدالة المساعدة من api.js
+import { getImageUrl } from '../../../services/api';
+
 const ProductViewModal = ({ darkMode, product, onClose, onEdit }) => {
   const [activeImageIndex, setActiveImageIndex] = useState(0);
   const [imagesList, setImagesList] = useState([]);
@@ -45,15 +48,10 @@ const ProductViewModal = ({ darkMode, product, onClose, onEdit }) => {
 
   if (!product) return null;
 
-  const getImageUrl = (image) => {
+  // ✅ استخدام getImageUrl المستوردة
+  const getImageDisplayUrl = (image) => {
     if (!image) return '';
-    if (typeof image === 'string') {
-      if (image.startsWith('http')) return image;
-      if (image.startsWith('/media/')) return `http://localhost:8000${image}`;
-      if (image.startsWith('data:')) return image;
-      return `http://localhost:8000/media/${image.replace(/^\/+/, '')}`;
-    }
-    return '';
+    return getImageUrl(image);
   };
 
   const formatCurrency = (value) => {
@@ -144,7 +142,7 @@ const ProductViewModal = ({ darkMode, product, onClose, onEdit }) => {
     <div className="fixed inset-0 bg-black/60 backdrop-blur-md flex items-center justify-center z-50 p-4 animate-fade-in-up">
       <div className={`rounded-2xl shadow-2xl w-full max-w-4xl max-h-[90vh] overflow-hidden flex flex-col ${darkMode ? 'bg-neutral-900' : 'bg-white'}`}>
         
-        {/* Header - Improved */}
+        {/* Header */}
         <div className={`sticky top-0 z-30 border-b px-6 py-5 flex-shrink-0 ${darkMode ? 'bg-neutral-900/95 border-neutral-800' : 'bg-white/95 border-neutral-200'}`}>
           <div className="flex justify-between items-center">
             <div className="flex items-center gap-4">
@@ -174,9 +172,8 @@ const ProductViewModal = ({ darkMode, product, onClose, onEdit }) => {
         {/* Scrollable Content */}
         <div className="overflow-y-auto flex-1 px-6 py-6 space-y-8">
           
-          {/* Product Images Section - Improved Carousel */}
+          {/* Product Images Section */}
           <div className="relative group" onMouseEnter={() => setIsHovering(true)} onMouseLeave={() => setIsHovering(false)}>
-            {/* Main Image Container */}
             <div className="relative rounded-2xl overflow-hidden bg-gradient-to-br from-neutral-100 to-neutral-200 dark:from-neutral-800 dark:to-neutral-900 min-h-[400px] shadow-xl">
               {isLoading && (
                 <div className="absolute inset-0 flex items-center justify-center">
@@ -185,7 +182,7 @@ const ProductViewModal = ({ darkMode, product, onClose, onEdit }) => {
               )}
               
               <img
-                src={getImageUrl(imagesList[activeImageIndex])}
+                src={getImageDisplayUrl(imagesList[activeImageIndex])}
                 alt={product.name}
                 className="w-full h-[400px] object-contain transition-all duration-500 transform group-hover:scale-105"
                 onLoad={() => setIsLoading(false)}
@@ -195,7 +192,6 @@ const ProductViewModal = ({ darkMode, product, onClose, onEdit }) => {
                 }}
               />
               
-              {/* Navigation Buttons - Always visible on hover */}
               {hasMultipleImages && (
                 <>
                   <button
@@ -223,7 +219,6 @@ const ProductViewModal = ({ darkMode, product, onClose, onEdit }) => {
                 </>
               )}
               
-              {/* Image Counter Badge */}
               {hasMultipleImages && (
                 <div className="absolute bottom-4 right-4 px-3 py-1.5 rounded-full
                               bg-black/70 backdrop-blur-md text-white text-xs font-medium
@@ -233,7 +228,6 @@ const ProductViewModal = ({ darkMode, product, onClose, onEdit }) => {
                 </div>
               )}
               
-              {/* Category Badge */}
               <div className="absolute top-4 left-4">
                 <div className={`px-3 py-1.5 rounded-full text-xs font-bold text-white
                               bg-gradient-to-r ${getCategoryColor(product.category)} shadow-lg`}>
@@ -242,7 +236,6 @@ const ProductViewModal = ({ darkMode, product, onClose, onEdit }) => {
               </div>
             </div>
             
-            {/* Thumbnails - Improved */}
             {hasMultipleImages && (
               <div className="flex justify-center gap-3 mt-5 overflow-x-auto pb-2 custom-scrollbar px-2">
                 {imagesList.map((img, idx) => (
@@ -259,7 +252,7 @@ const ProductViewModal = ({ darkMode, product, onClose, onEdit }) => {
                         : 'opacity-70 hover:opacity-100'}`}
                   >
                     <img
-                      src={getImageUrl(img)}
+                      src={getImageDisplayUrl(img)}
                       alt={`Thumbnail ${idx + 1}`}
                       className="w-full h-full object-cover"
                     />
@@ -274,7 +267,7 @@ const ProductViewModal = ({ darkMode, product, onClose, onEdit }) => {
             )}
           </div>
 
-          {/* Product Name and Basic Info - Enhanced */}
+          {/* Product Name and Basic Info */}
           <div className="text-center border-b pb-5" style={{ borderColor: darkMode ? '#374151' : '#e5e7eb' }}>
             <h3 className={`text-3xl font-bold mb-3 ${darkMode ? 'text-white' : 'text-neutral-900'}`}>
               {product.name}
@@ -295,7 +288,7 @@ const ProductViewModal = ({ darkMode, product, onClose, onEdit }) => {
             </div>
           </div>
 
-          {/* Status Badge - Enhanced */}
+          {/* Status Badge */}
           <div className="flex justify-center">
             <div className={`inline-flex items-center gap-2.5 px-6 py-3 rounded-full ${stockStatus.bg} border-2 ${stockStatus.border} shadow-md`}>
               {stockStatus.icon}
@@ -303,12 +296,12 @@ const ProductViewModal = ({ darkMode, product, onClose, onEdit }) => {
             </div>
           </div>
 
-          {/* Main Info Grid - 2 Columns with better spacing */}
+          {/* Main Info Grid */}
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
             
             {/* Left Column */}
             <div className="space-y-6">
-              {/* Pricing Card - Enhanced */}
+              {/* Pricing Card */}
               <div className={`rounded-2xl p-6 ${darkMode ? 'bg-neutral-800/50' : 'bg-neutral-50'} border-2 ${darkMode ? 'border-neutral-700' : 'border-neutral-200'} hover:shadow-lg transition-all`}>
                 <h4 className={`text-lg font-bold mb-5 flex items-center gap-2.5 ${darkMode ? 'text-white' : 'text-neutral-800'}`}>
                   <div className="p-2 rounded-xl bg-gradient-to-br from-[#8B7ABA]/20 to-[#8B7ABA]/10">
@@ -332,7 +325,7 @@ const ProductViewModal = ({ darkMode, product, onClose, onEdit }) => {
                 </div>
               </div>
 
-              {/* Inventory Card - Enhanced */}
+              {/* Inventory Card */}
               <div className={`rounded-2xl p-6 ${darkMode ? 'bg-neutral-800/50' : 'bg-neutral-50'} border-2 ${darkMode ? 'border-neutral-700' : 'border-neutral-200'} hover:shadow-lg transition-all`}>
                 <h4 className={`text-lg font-bold mb-5 flex items-center gap-2.5 ${darkMode ? 'text-white' : 'text-neutral-800'}`}>
                   <div className="p-2 rounded-xl bg-gradient-to-br from-[#F08FAE]/20 to-[#F08FAE]/10">
@@ -377,7 +370,7 @@ const ProductViewModal = ({ darkMode, product, onClose, onEdit }) => {
 
             {/* Right Column */}
             <div className="space-y-6">
-              {/* Product Details Card - Enhanced */}
+              {/* Product Details Card */}
               <div className={`rounded-2xl p-6 ${darkMode ? 'bg-neutral-800/50' : 'bg-neutral-50'} border-2 ${darkMode ? 'border-neutral-700' : 'border-neutral-200'} hover:shadow-lg transition-all`}>
                 <h4 className={`text-lg font-bold mb-5 flex items-center gap-2.5 ${darkMode ? 'text-white' : 'text-neutral-800'}`}>
                   <div className="p-2 rounded-xl bg-gradient-to-br from-[#EE9C6C]/20 to-[#EE9C6C]/10">
@@ -419,7 +412,7 @@ const ProductViewModal = ({ darkMode, product, onClose, onEdit }) => {
                 </div>
               </div>
 
-              {/* Timeline Card - Enhanced */}
+              {/* Timeline Card */}
               <div className={`rounded-2xl p-6 ${darkMode ? 'bg-neutral-800/50' : 'bg-neutral-50'} border-2 ${darkMode ? 'border-neutral-700' : 'border-neutral-200'} hover:shadow-lg transition-all`}>
                 <h4 className={`text-lg font-bold mb-5 flex items-center gap-2.5 ${darkMode ? 'text-white' : 'text-neutral-800'}`}>
                   <div className="p-2 rounded-xl bg-gradient-to-br from-[#34D19C]/20 to-[#34D19C]/10">
@@ -442,12 +435,10 @@ const ProductViewModal = ({ darkMode, product, onClose, onEdit }) => {
                   </div>
                 </div>
               </div>
-
-           
             </div>
           </div>
 
-          {/* Description - Enhanced */}
+          {/* Description */}
           {product.description && (
             <div className={`rounded-2xl p-6 ${darkMode ? 'bg-neutral-800/50' : 'bg-neutral-50'} border-2 ${darkMode ? 'border-neutral-700' : 'border-neutral-200'}`}>
               <h4 className={`text-lg font-bold mb-4 flex items-center gap-2.5 ${darkMode ? 'text-white' : 'text-neutral-800'}`}>
@@ -460,48 +451,48 @@ const ProductViewModal = ({ darkMode, product, onClose, onEdit }) => {
             </div>
           )}
 
-             {/* Specifications Card - Enhanced */}
-              {(product.weight || product.dimensions || product.warranty_months) && (
-                <div className={`rounded-2xl p-6 ${darkMode ? 'bg-neutral-800/50' : 'bg-neutral-50'} border-2 ${darkMode ? 'border-neutral-700' : 'border-neutral-200'} hover:shadow-lg transition-all`}>
-                  <h4 className={`text-lg font-bold mb-5 flex items-center gap-2.5 ${darkMode ? 'text-white' : 'text-neutral-800'}`}>
-                    <div className="p-2 rounded-xl bg-gradient-to-br from-[#8B7ABA]/20 to-[#8B7ABA]/10">
-                      <Ruler size={20} style={{ color: '#8B7ABA' }} />
-                    </div>
-                    Specifications
-                  </h4>
-                  <div className="grid grid-cols-3 gap-4">
-                    {product.weight && (
-                      <div className="flex items-center gap-3 bg-white/50 dark:bg-neutral-700/30 rounded-xl p-3">
-                        <Weight size={18} className={darkMode ? 'text-neutral-400' : 'text-neutral-500'} />
-                        <div>
-                          <p className={`text-xs ${darkMode ? 'text-neutral-400' : 'text-neutral-500'}`}>Weight</p>
-                          <p className={`font-semibold ${darkMode ? 'text-white' : 'text-neutral-800'}`}>{product.weight} kg</p>
-                        </div>
-                      </div>
-                    )}
-                    {product.dimensions && (
-                      <div className="flex items-center gap-3 bg-white/50 dark:bg-neutral-700/30 rounded-xl p-3">
-                        <Ruler size={18} className={darkMode ? 'text-neutral-400' : 'text-neutral-500'} />
-                        <div>
-                          <p className={`text-xs ${darkMode ? 'text-neutral-400' : 'text-neutral-500'}`}>Dimensions</p>
-                          <p className={`font-semibold ${darkMode ? 'text-white' : 'text-neutral-800'}`}>{product.dimensions}</p>
-                        </div>
-                      </div>
-                    )}
-                    {product.warranty_months && (
-                      <div className="flex items-center gap-3 bg-white/50 dark:bg-neutral-700/30 rounded-xl p-3">
-                        <Shield size={18} className={darkMode ? 'text-neutral-400' : 'text-neutral-500'} />
-                        <div>
-                          <p className={`text-xs ${darkMode ? 'text-neutral-400' : 'text-neutral-500'}`}>Warranty</p>
-                          <p className={`font-semibold ${darkMode ? 'text-white' : 'text-neutral-800'}`}>{product.warranty_months} months</p>
-                        </div>
-                      </div>
-                    )}
-                  </div>
+          {/* Specifications Card */}
+          {(product.weight || product.dimensions || product.warranty_months) && (
+            <div className={`rounded-2xl p-6 ${darkMode ? 'bg-neutral-800/50' : 'bg-neutral-50'} border-2 ${darkMode ? 'border-neutral-700' : 'border-neutral-200'} hover:shadow-lg transition-all`}>
+              <h4 className={`text-lg font-bold mb-5 flex items-center gap-2.5 ${darkMode ? 'text-white' : 'text-neutral-800'}`}>
+                <div className="p-2 rounded-xl bg-gradient-to-br from-[#8B7ABA]/20 to-[#8B7ABA]/10">
+                  <Ruler size={20} style={{ color: '#8B7ABA' }} />
                 </div>
-              )}
+                Specifications
+              </h4>
+              <div className="grid grid-cols-3 gap-4">
+                {product.weight && (
+                  <div className="flex items-center gap-3 bg-white/50 dark:bg-neutral-700/30 rounded-xl p-3">
+                    <Weight size={18} className={darkMode ? 'text-neutral-400' : 'text-neutral-500'} />
+                    <div>
+                      <p className={`text-xs ${darkMode ? 'text-neutral-400' : 'text-neutral-500'}`}>Weight</p>
+                      <p className={`font-semibold ${darkMode ? 'text-white' : 'text-neutral-800'}`}>{product.weight} kg</p>
+                    </div>
+                  </div>
+                )}
+                {product.dimensions && (
+                  <div className="flex items-center gap-3 bg-white/50 dark:bg-neutral-700/30 rounded-xl p-3">
+                    <Ruler size={18} className={darkMode ? 'text-neutral-400' : 'text-neutral-500'} />
+                    <div>
+                      <p className={`text-xs ${darkMode ? 'text-neutral-400' : 'text-neutral-500'}`}>Dimensions</p>
+                      <p className={`font-semibold ${darkMode ? 'text-white' : 'text-neutral-800'}`}>{product.dimensions}</p>
+                    </div>
+                  </div>
+                )}
+                {product.warranty_months && (
+                  <div className="flex items-center gap-3 bg-white/50 dark:bg-neutral-700/30 rounded-xl p-3">
+                    <Shield size={18} className={darkMode ? 'text-neutral-400' : 'text-neutral-500'} />
+                    <div>
+                      <p className={`text-xs ${darkMode ? 'text-neutral-400' : 'text-neutral-500'}`}>Warranty</p>
+                      <p className={`font-semibold ${darkMode ? 'text-white' : 'text-neutral-800'}`}>{product.warranty_months} months</p>
+                    </div>
+                  </div>
+                )}
+              </div>
+            </div>
+          )}
 
-          {/* Tags - Enhanced */}
+          {/* Tags */}
           {product.tags && product.tags.length > 0 && (
             <div className={`rounded-2xl p-6 ${darkMode ? 'bg-neutral-800/50' : 'bg-neutral-50'} border-2 ${darkMode ? 'border-neutral-700' : 'border-neutral-200'}`}>
               <h4 className={`text-lg font-bold mb-4 flex items-center gap-2.5 ${darkMode ? 'text-white' : 'text-neutral-800'}`}>
@@ -525,7 +516,7 @@ const ProductViewModal = ({ darkMode, product, onClose, onEdit }) => {
           )}
         </div>
 
-        {/* Footer Actions - Enhanced */}
+        {/* Footer Actions */}
         <div className={`sticky bottom-0 border-t p-6 flex-shrink-0 ${darkMode ? 'bg-neutral-900/95 border-neutral-800' : 'bg-white/95 border-neutral-200'}`}>
           <div className="flex gap-4">
             <button
@@ -553,6 +544,5 @@ const ProductViewModal = ({ darkMode, product, onClose, onEdit }) => {
     </div>
   );
 };
-
 
 export default ProductViewModal;

@@ -25,6 +25,9 @@ import {
   FolderTree
 } from 'lucide-react';
 
+// ✅ استيراد الدوال المساعدة من api.js
+import { getImageUrl, getFallbackImage } from '../../../services/api';
+
 const ProductListView = ({ 
   darkMode, 
   products, 
@@ -34,37 +37,11 @@ const ProductListView = ({
   getCategoryIcon,
   getCategoryColorClass 
 }) => {
-  // الألوان المحددة
   const colors = {
     primary: '#8B7ABA',
     secondary: '#F08FAE',
     accent: '#EE9C6C',
     success: '#34D19C'
-  };
-
-  // ✅ صور افتراضية حسب الفئة
-  const getFallbackImage = (category) => {
-    const fallbackImages = {
-      'Electronics': 'https://images.unsplash.com/photo-1550009158-9ebf69173e03?w=100&h=100&fit=crop',
-      'Clothing': 'https://images.unsplash.com/photo-1441984904996-e0b6ba687e04?w=100&h=100&fit=crop',
-      'Home & Garden': 'https://images.unsplash.com/photo-1583847268964-b28dc8f51f92?w=100&h=100&fit=crop',
-      'Books': 'https://images.unsplash.com/photo-1524995997946-a1c2e315a42f?w=100&h=100&fit=crop',
-      'Sports': 'https://images.unsplash.com/photo-1517466787929-bc90951d0974?w=100&h=100&fit=crop',
-      'Health': 'https://images.unsplash.com/photo-1505751172876-fa1923c5c528?w=100&h=100&fit=crop',
-      'Beauty': 'https://images.unsplash.com/photo-1596462502278-27bfdc403348?w=100&h=100&fit=crop',
-      'Other': 'https://images.unsplash.com/photo-1472851294608-062f824d29cc?w=100&h=100&fit=crop'
-    };
-    
-    const getCategoryName = (cat) => {
-      if (typeof cat === 'string' && cat.match(/^\d+$/)) {
-        const names = { '1': 'Electronics', '2': 'Clothing', '3': 'Books',
-                        '4': 'Home & Garden', '5': 'Sports', '6': 'Health', '7': 'Beauty' };
-        return names[cat] || 'Other';
-      }
-      return cat || 'Other';
-    };
-    
-    return fallbackImages[getCategoryName(category)] || fallbackImages['Other'];
   };
 
   // دالة للحصول على اسم الفئة
@@ -192,47 +169,6 @@ const ProductListView = ({
     }
   };
 
-  // ✅ ✅ ✅ الدالة الرئيسية - تعمل محلياً وفي الإنتاج
-  const getImageUrl = (product) => {
-    const formatImage = (path) => {
-      if (!path) return null;
-      
-      if (path.startsWith('http://') || path.startsWith('https://')) {
-        return path;
-      }
-      
-      if (path.startsWith('data:')) {
-        return path;
-      }
-      
-      let cleanPath = path;
-      if (cleanPath.startsWith('/media/')) {
-        cleanPath = cleanPath.substring(6);
-      } else if (cleanPath.startsWith('media/')) {
-        cleanPath = cleanPath.substring(6);
-      }
-      cleanPath = cleanPath.replace(/^\/+/, '');
-      
-      // ✅ ✅ ✅ الفرق بين المحلي والإنتاج
-      const isProduction = import.meta.env.PROD;
-      const baseUrl = isProduction 
-        ? 'https://vigilant-backend-8owb.onrender.com' 
-        : 'http://localhost:8000';
-      
-      return `${baseUrl}/media/${cleanPath}`;
-    };
-    
-    // ✅ البحث عن الصورة في images (أول صورة)
-    const imagePath = product?.images?.[0];
-    
-    if (imagePath) {
-      const formatted = formatImage(imagePath);
-      if (formatted) return formatted;
-    }
-    
-    return getFallbackImage(product?.category);
-  };
-
   if (!products || products.length === 0) {
     return (
       <div className={`rounded-2xl border p-16 text-center ${
@@ -279,7 +215,9 @@ const ProductListView = ({
           <tbody className={`divide-y ${darkMode ? 'divide-neutral-700' : 'divide-neutral-200'}`}>
             {products.map((product, index) => {
               const stockStatus = getStockStatus(product.quantity);
-              const imageUrl = getImageUrl(product);
+              // ✅ استخدام getImageUrl المستوردة
+              const imageUrl = getImageUrl(product?.images?.[0] || product?.image);
+              const fallbackImage = getFallbackImage(product?.category);
               const categoryName = getCategoryNameDisplay(product.category);
               const categoryIcon = getCategoryIconComponent(product.category, 16);
               const categoryColor = getCategoryColorDisplay(product.category);
@@ -299,12 +237,12 @@ const ProductListView = ({
                       <div className={`relative w-14 h-14 rounded-xl overflow-hidden flex-shrink-0
                         ${darkMode ? 'bg-neutral-700' : 'bg-gradient-to-br from-neutral-100 to-neutral-200'}`}>
                         <img 
-                          src={imageUrl} 
+                          src={imageUrl || fallbackImage}
                           alt={product.name}
                           className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-110"
                           loading="lazy"
                           onError={(e) => {
-                            e.target.src = getFallbackImage(product?.category);
+                            e.target.src = fallbackImage;
                           }}
                         />
                         

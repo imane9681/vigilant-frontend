@@ -28,6 +28,9 @@ import {
   FolderTree
 } from 'lucide-react';
 
+// ✅ استيراد الدوال المساعدة من api.js
+import { getImageUrl, getFallbackImage } from '../../../services/api';
+
 const ProductGrid = ({ 
   darkMode, 
   products, 
@@ -45,42 +48,6 @@ const ProductGrid = ({
     accent: '#EE9C6C',
     success: '#34D19C',
     gradient: 'linear-gradient(135deg, #8B7ABA 0%, #F08FAE 50%, #EE9C6C 100%)'
-  };
-
-  // ✅ صور افتراضية حسب الفئة
-  const getFallbackImage = (category) => {
-    const fallbackImages = {
-      'Electronics': 'https://images.unsplash.com/photo-1550009158-9ebf69173e03?w=400&h=300&fit=crop',
-      'Clothing': 'https://images.unsplash.com/photo-1441984904996-e0b6ba687e04?w=400&h=300&fit=crop',
-      'Home & Garden': 'https://images.unsplash.com/photo-1583847268964-b28dc8f51f92?w=400&h=300&fit=crop',
-      'Books': 'https://images.unsplash.com/photo-1524995997946-a1c2e315a42f?w=400&h=300&fit=crop',
-      'Sports': 'https://images.unsplash.com/photo-1517466787929-bc90951d0974?w=400&h=300&fit=crop',
-      'Health': 'https://images.unsplash.com/photo-1505751172876-fa1923c5c528?w=400&h=300&fit=crop',
-      'Beauty': 'https://images.unsplash.com/photo-1596462502278-27bfdc403348?w=400&h=300&fit=crop',
-      'Other': 'https://images.unsplash.com/photo-1472851294608-062f824d29cc?w=400&h=300&fit=crop'
-    };
-    
-    const getCategoryName = (cat) => {
-      if (typeof cat === 'string' && cat.match(/^\d+$/)) {
-        const names = { '1': 'Electronics', '2': 'Clothing', '3': 'Books',
-                        '4': 'Home & Garden', '5': 'Sports', '6': 'Health', '7': 'Beauty' };
-        return names[cat] || 'Other';
-      }
-      return cat || 'Other';
-    };
-    
-    return fallbackImages[getCategoryName(category)] || fallbackImages['Other'];
-  };
-
-  const categoryImages = {
-    'Electronics': 'https://images.unsplash.com/photo-1550009158-9ebf69173e03?w=800&h=600&fit=crop&auto=format',
-    'Clothing': 'https://images.unsplash.com/photo-1441984904996-e0b6ba687e04?w=800&h=600&fit=crop&auto=format',
-    'Home & Garden': 'https://images.unsplash.com/photo-1583847268964-b28dc8f51f92?w=800&h=600&fit=crop&auto=format',
-    'Books': 'https://images.unsplash.com/photo-1524995997946-a1c2e315a42f?w=800&h=600&fit=crop&auto=format',
-    'Sports': 'https://images.unsplash.com/photo-1517466787929-bc90951d0974?w=800&h=600&fit=crop&auto=format',
-    'Health': 'https://images.unsplash.com/photo-1505751172876-fa1923c5c528?w=800&h=600&fit=crop&auto=format',
-    'Beauty': 'https://images.unsplash.com/photo-1596462502278-27bfdc403348?w=800&h=600&fit=crop&auto=format',
-    'Other': 'https://images.unsplash.com/photo-1472851294608-062f824d29cc?w=800&h=600&fit=crop&auto=format'
   };
 
   const getStockStatus = (quantity) => {
@@ -129,41 +96,6 @@ const ProductGrid = ({
       return [product.image];
     }
     return [getFallbackImage(product?.category)];
-  };
-
-  // ✅ ✅ ✅ الدالة الرئيسية - تعمل محلياً وفي الإنتاج
-  const getImageUrl = (image, product) => {
-    if (!image) {
-      return getFallbackImage(product?.category);
-    }
-    
-    if (typeof image === 'string') {
-      if (image.startsWith('http://') || image.startsWith('https://')) {
-        return image;
-      }
-      
-      if (image.startsWith('data:')) {
-        return image;
-      }
-      
-      let cleanPath = image;
-      if (cleanPath.startsWith('/media/')) {
-        cleanPath = cleanPath.substring(6);
-      } else if (cleanPath.startsWith('media/')) {
-        cleanPath = cleanPath.substring(6);
-      }
-      cleanPath = cleanPath.replace(/^\/+/, '');
-      
-      // ✅ ✅ ✅ الفرق بين المحلي والإنتاج
-      const isProduction = import.meta.env.PROD;
-      const baseUrl = isProduction 
-        ? 'https://vigilant-backend-8owb.onrender.com' 
-        : 'http://localhost:8000';
-      
-      return `${baseUrl}/media/${cleanPath}`;
-    }
-    
-    return getFallbackImage(product?.category);
   };
 
   // دالة للحصول على أيقونة الفئة
@@ -276,7 +208,7 @@ const ProductGrid = ({
     return `${Math.floor(diffDays / 30)} months ago`;
   };
 
-  // مكون الصورة مع التنقل
+  // ✅ مكون الصورة مع التنقل - استخدام getImageUrl المستوردة
   const ProductImage = ({ product, categoryGradient }) => {
     const [isLoading, setIsLoading] = useState(true);
     const [hasError, setHasError] = useState(false);
@@ -292,7 +224,7 @@ const ProductGrid = ({
     const imageCount = imagesList.length;
     const hasMultipleImages = imageCount > 1;
     const currentImage = imagesList[currentIndex] || getFallbackImage(product?.category);
-    const imageUrl = getImageUrl(currentImage, product);
+    const imageUrl = getImageUrl(currentImage);
     
     const nextImage = (e) => {
       e.preventDefault();
@@ -509,7 +441,6 @@ const ProductGrid = ({
                 categoryGradient={categoryGradient}
               />
 
-              {/* باقي محتوى البطاقة */}
               <div className="p-6 flex-1 flex flex-col relative">
                 <div className="absolute top-0 left-6 right-6 h-px bg-gradient-to-r from-transparent via-neutral-300 to-transparent dark:via-neutral-600" />
                 
