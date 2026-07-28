@@ -26,19 +26,15 @@ const TopProductsWidget = ({ darkMode, topProducts: initialTopProducts }) => {
   ];
 
   // ✅ ✅ ✅ دالة مساعدة للحصول على رابط الصورة
- const getImageUrl = useCallback((image) => {
-  if (!image) return null;
-  if (typeof image === 'string') {
-    if (image.startsWith('http')) return image;
-    if (image.startsWith('/media/')) {
-      // ✅ غيرنا localhost إلى رابط Render
-      return `https://vigilant-backend-8owb.onrender.com${image}`;
+  const getImageUrl = useCallback((image) => {
+    if (!image) return null;
+    if (typeof image === 'string') {
+      if (image.startsWith('http')) return image;
+      if (image.startsWith('/media/')) return `http://localhost:8000${image}`;
+      return `http://localhost:8000/media/${image}`;
     }
-    // ✅ غيرنا localhost إلى رابط Render
-    return `https://vigilant-backend-8owb.onrender.com/media/${image}`;
-  }
-  return null;
-}, []);
+    return null;
+  }, []);
 
   // ✅ ✅ ✅ دالة معالجة الصورة مع محاولة عدة مصادر
   const getProductImage = useCallback((product) => {

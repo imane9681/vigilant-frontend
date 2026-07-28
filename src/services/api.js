@@ -346,11 +346,10 @@ export const databaseService = {
     deleteQueryLog: (id) => api.delete(`/database/${id}/delete_query_log/`),
 };
 
-
+// ✅ دالة للحصول على رابط الصورة الكامل
 export const getImageUrl = (imagePath) => {
   if (!imagePath) return null;
   if (imagePath.startsWith('http')) return imagePath;
-  
   const baseUrl = import.meta.env.VITE_API_URL.replace('/api', '');
   return `${baseUrl}${imagePath}`;
 };

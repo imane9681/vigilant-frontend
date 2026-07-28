@@ -27,6 +27,7 @@ import {
   ChevronRight,
   FolderTree
 } from 'lucide-react';
+import { getImageUrl } from '../../../services/api';
 
 const ProductGrid = ({ 
   darkMode, 
@@ -121,21 +122,19 @@ const ProductGrid = ({
 
   // دالة محسنة لجلب URL الصورة
   const getImageUrl = (image, product) => {
-  if (!image) {
-    return categoryImages[product?.category] || categoryImages['Other'];
-  }
-  if (typeof image === 'string') {
-    if (image.startsWith('http')) return image;
-    if (image.startsWith('/media/')) {
-      // ✅ غيّر هذا إلى رابط Render
-      return `https://vigilant-backend-8owb.onrender.com${image}`;
+    if (!image) {
+      return categoryImages[product?.category] || categoryImages['Other'];
     }
-    if (image.startsWith('data:')) return image;
-    // ✅ غيّر هذا أيضاً
-    return `https://vigilant-backend-8owb.onrender.com/media/${image.replace(/^\/+/, '')}`;
-  }
-  return categoryImages[product?.category] || categoryImages['Other'];
-};
+    if (typeof image === 'string') {
+      if (image.startsWith('http')) return image;
+      if (image.startsWith('/media/')) {
+        return `http://localhost:8000${image}`;
+      }
+      if (image.startsWith('data:')) return image;
+      return `http://localhost:8000/media/${image.replace(/^\/+/, '')}`;
+    }
+    return categoryImages[product?.category] || categoryImages['Other'];
+  };
 
   // ✅ دالة للحصول على أيقونة الفئة (محسنة)
   const getCategoryIconComponent = (categoryId, size = 16) => {
@@ -307,7 +306,7 @@ const ProductGrid = ({
         
         <div className="relative w-full h-full flex items-center justify-center p-4">
           <img 
-            src={imageUrl}
+            src={getImageUrl(product.image)}
             alt={product.name}
             className="max-w-full max-h-full w-auto h-auto transition-all duration-700 
                      group-hover:scale-110 group-hover:rotate-1"
