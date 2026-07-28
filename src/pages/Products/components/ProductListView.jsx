@@ -34,27 +34,25 @@ const ProductListView = ({
   getCategoryIcon,
   getCategoryColorClass 
 }) => {
-  // الألوان المحددة - البنفسجي هو اللون الأساسي
+  // الألوان المحددة
   const colors = {
-    primary: '#8B7ABA', // بنفسجي (أساسي)
-    secondary: '#F08FAE', // وردي
-    accent: '#EE9C6C', // برتقالي
-    success: '#34D19C' // أخضر
+    primary: '#8B7ABA',
+    secondary: '#F08FAE',
+    accent: '#EE9C6C',
+    success: '#34D19C'
   };
 
-  // ✅ دالة للحصول على اسم الفئة (محسنة)
+  // دالة للحصول على اسم الفئة
   const getCategoryNameDisplay = (categoryId) => {
     if (getCategoryName) {
       const name = getCategoryName(categoryId);
       if (name) return name;
     }
     
-    // fallback: إذا كان categoryId هو اسم بالفعل
     if (typeof categoryId === 'string' && !categoryId.match(/^\d+$/)) {
       return categoryId;
     }
     
-    // أسماء افتراضية للأرقام
     const categoryNames = {
       '1': 'Electronics',
       '2': 'Clothing',
@@ -68,7 +66,7 @@ const ProductListView = ({
     return categoryNames[categoryId] || 'Other';
   };
 
-  // ✅ دالة للحصول على أيقونة الفئة (محسنة)
+  // دالة للحصول على أيقونة الفئة
   const getCategoryIconComponent = (categoryId, size = 16) => {
     if (getCategoryIcon) {
       const icon = getCategoryIcon(categoryId, size);
@@ -103,7 +101,7 @@ const ProductListView = ({
     return icons[categoryNames[categoryId]] || <FolderTree size={size} style={{ color: colors.primary }} />;
   };
 
-  // ✅ دالة للحصول على لون الفئة (محسنة)
+  // دالة للحصول على لون الفئة
   const getCategoryColorDisplay = (categoryId) => {
     if (getCategoryColorClass) {
       const color = getCategoryColorClass(categoryId);
@@ -169,15 +167,42 @@ const ProductListView = ({
     }
   };
 
+  // ✅ ✅ ✅ الدالة الرئيسية - تعمل محلياً وفي الإنتاج
   const getImageUrl = (product) => {
-    if (product?.image) {
-      if (typeof product.image === 'string') {
-        if (product.image.startsWith('http')) return product.image;
-        return `http://localhost:8000/media/${product.image}`;
+    // دالة مساعدة لتنسيق مسار الصورة
+    const formatImage = (path) => {
+      if (!path) return null;
+      
+      if (path.startsWith('http://') || path.startsWith('https://')) {
+        return path;
       }
+      
+      if (path.startsWith('data:')) {
+        return path;
+      }
+      
+      let cleanPath = path;
+      if (cleanPath.startsWith('/media/')) {
+        cleanPath = cleanPath.substring(6);
+      } else if (cleanPath.startsWith('media/')) {
+        cleanPath = cleanPath.substring(6);
+      }
+      cleanPath = cleanPath.replace(/^\/+/, '');
+      
+      // ✅ ✅ ✅ الفرق بين المحلي والإنتاج
+      const isProduction = import.meta.env.PROD;
+      const baseUrl = isProduction ? '' : 'http://localhost:8000';
+      return `${baseUrl}/media/${cleanPath}`;
+    };
+    
+    // البحث عن الصورة في images أو image
+    const imagePath = product?.images?.[0] || product?.image;
+    if (imagePath) {
+      const formatted = formatImage(imagePath);
+      if (formatted) return formatted;
     }
     
-    // صور افتراضية لكل فئة
+    // الصور الافتراضية
     const defaultImages = {
       'Electronics': 'https://images.unsplash.com/photo-1550009158-9ebf69173e03?w=100&h=100&fit=crop',
       'Clothing': 'https://images.unsplash.com/photo-1441984904996-e0b6ba687e04?w=100&h=100&fit=crop',
@@ -189,7 +214,16 @@ const ProductListView = ({
       'Other': 'https://images.unsplash.com/photo-1472851294608-062f824d29cc?w=100&h=100&fit=crop'
     };
     
-    return defaultImages[product?.category] || defaultImages['Other'];
+    let categoryName = product?.category;
+    if (typeof categoryName === 'string' && categoryName.match(/^\d+$/)) {
+      const categoryNames = {
+        '1': 'Electronics', '2': 'Clothing', '3': 'Books',
+        '4': 'Home & Garden', '5': 'Sports', '6': 'Health', '7': 'Beauty'
+      };
+      categoryName = categoryNames[categoryName] || 'Other';
+    }
+    
+    return defaultImages[categoryName] || defaultImages['Other'];
   };
 
   if (!products || products.length === 0) {
@@ -239,7 +273,6 @@ const ProductListView = ({
             {products.map((product, index) => {
               const stockStatus = getStockStatus(product.quantity);
               const imageUrl = getImageUrl(product);
-              // ✅ استخدام الدوال المحسنة للحصول على اسم الفئة وأيقونتها ولونها
               const categoryName = getCategoryNameDisplay(product.category);
               const categoryIcon = getCategoryIconComponent(product.category, 16);
               const categoryColor = getCategoryColorDisplay(product.category);
@@ -256,7 +289,6 @@ const ProductListView = ({
                 >
                   <td className="py-4 px-6">
                     <div className="flex items-center gap-4">
-                      {/* Product Image */}
                       <div className={`relative w-14 h-14 rounded-xl overflow-hidden flex-shrink-0
                         ${darkMode ? 'bg-neutral-700' : 'bg-gradient-to-br from-neutral-100 to-neutral-200'}`}>
                         <img 
@@ -266,7 +298,6 @@ const ProductListView = ({
                           loading="lazy"
                         />
                         
-                        {/* Featured Badge */}
                         {product.featured && (
                           <div className="absolute -top-1 -right-1 w-5 h-5 rounded-full flex items-center justify-center shadow-lg"
                                style={{ background: `linear-gradient(135deg, ${colors.accent}, ${colors.secondary})` }}>
@@ -275,7 +306,6 @@ const ProductListView = ({
                         )}
                       </div>
                       
-                      {/* Product Info */}
                       <div>
                         <div className={`font-bold flex items-center gap-2 ${darkMode ? 'text-white' : 'text-neutral-900'}`}>
                           {product.name}
@@ -306,7 +336,6 @@ const ProductListView = ({
                     </div>
                   </td>
                   
-                  {/* ✅ Category - عرض اسم الفئة بدلاً من الرقم */}
                   <td className="py-4 px-6">
                     <div className={`inline-flex items-center gap-2 px-3 py-1.5 ${categoryColor} rounded-lg text-sm font-medium`}>
                       {categoryIcon}
@@ -314,14 +343,12 @@ const ProductListView = ({
                     </div>
                   </td>
                   
-                  {/* Price */}
                   <td className="py-4 px-6">
                     <div className={`text-lg font-bold`} style={{ color: colors.primary }}>
                       {formatPrice(product.price)}
                     </div>
                   </td>
                   
-                  {/* Stock */}
                   <td className="py-4 px-6">
                     <div className="flex items-center gap-3">
                       <div className={`font-bold ${darkMode ? 'text-white' : 'text-neutral-900'}`}>
@@ -340,7 +367,6 @@ const ProductListView = ({
                     </div>
                   </td>
                   
-                  {/* Status */}
                   <td className="py-4 px-6">
                     <div className={`inline-flex items-center gap-2 px-3 py-1.5 ${stockStatus.badge} rounded-lg text-sm font-medium`}>
                       {stockStatus.icon}
@@ -348,7 +374,6 @@ const ProductListView = ({
                     </div>
                   </td>
                   
-                  {/* Actions */}
                   <td className="py-4 px-6">
                     <div className="flex items-center gap-2">
                       <button

@@ -27,7 +27,6 @@ import {
   ChevronRight,
   FolderTree
 } from 'lucide-react';
-import { getImageUrl } from '../../../services/api';
 
 const ProductGrid = ({ 
   darkMode, 
@@ -43,7 +42,6 @@ const ProductGrid = ({
   // تشخيص البيانات
   useEffect(() => {
     if (products && products.length > 0) {
-
       products.forEach((product, index) => {
         
       });
@@ -106,7 +104,7 @@ const ProductGrid = ({
     }
   };
 
-  // دالة محسنة لجلب جميع صور المنتج
+  // دالة لجلب جميع صور المنتج
   const getProductImages = (product) => {
     if (product?.images && Array.isArray(product.images) && product.images.length > 0) {
       return product.images;
@@ -120,35 +118,53 @@ const ProductGrid = ({
     return [categoryImages[product?.category] || categoryImages['Other']];
   };
 
-  // دالة محسنة لجلب URL الصورة
+  // ✅ ✅ ✅ الدالة الرئيسية - تعمل محلياً وفي الإنتاج
   const getImageUrl = (image, product) => {
-  if (!image) {
-    return categoryImages[product?.category] || categoryImages['Other'];
-  }
-  if (typeof image === 'string') {
-    if (image.startsWith('http')) return image;
-    if (image.startsWith('/media/')) {
-      // ✅ استخدم الرابط الكامل للـ Backend
-      const baseUrl = import.meta.env.VITE_API_URL.replace('/api', '');
-      return `${baseUrl}${image}`;
+    // إذا لم توجد صورة، استخدم الصورة الافتراضية
+    if (!image) {
+      return categoryImages[product?.category] || categoryImages['Other'];
     }
-    if (image.startsWith('data:')) return image;
-    // ✅ استخدم الرابط الكامل للـ Backend
-    const baseUrl = import.meta.env.VITE_API_URL.replace('/api', '');
-    return `${baseUrl}/media/${image.replace(/^\/+/, '')}`;
-  }
-  return categoryImages[product?.category] || categoryImages['Other'];
-};
+    
+    if (typeof image === 'string') {
+      // صورة من الإنترنت (HTTP/HTTPS)
+      if (image.startsWith('http://') || image.startsWith('https://')) {
+        return image;
+      }
+      
+      // Data URL (base64)
+      if (image.startsWith('data:')) {
+        return image;
+      }
+      
+      // تنظيف المسار - إزالة /media/ من البداية إذا وجدت
+      let cleanPath = image;
+      if (cleanPath.startsWith('/media/')) {
+        cleanPath = cleanPath.substring(6);
+      } else if (cleanPath.startsWith('media/')) {
+        cleanPath = cleanPath.substring(6);
+      }
+      cleanPath = cleanPath.replace(/^\/+/, '');
+      
+      // ✅ ✅ ✅ الفرق بين المحلي والإنتاج
+      // في الإنتاج: استخدم المسار النسبي (Vercel Rewrite سيتعامل معها)
+      // محلياً: استخدم localhost:8000
+      const isProduction = import.meta.env.PROD;
+      const baseUrl = isProduction ? '' : 'http://localhost:8000';
+      const finalUrl = `${baseUrl}/media/${cleanPath}`;
+      
+      return finalUrl;
+    }
+    
+    return categoryImages[product?.category] || categoryImages['Other'];
+  };
 
-  // ✅ دالة للحصول على أيقونة الفئة (محسنة)
+  // دالة للحصول على أيقونة الفئة
   const getCategoryIconComponent = (categoryId, size = 16) => {
-    // إذا كانت الدالة getCategoryIcon مرسلة من الخارج
     if (getCategoryIcon) {
       const icon = getCategoryIcon(categoryId, size);
       if (icon) return icon;
     }
     
-    // fallback: استخدام الأيقونات الافتراضية
     const icons = {
       'Electronics': <Laptop size={size} className="transition-transform group-hover:rotate-12" />,
       'Clothing': <Shirt size={size} className="transition-transform group-hover:scale-110" />,
@@ -160,26 +176,23 @@ const ProductGrid = ({
       'Other': <Package size={size} className="transition-transform group-hover:translate-y-[-2px]" />
     };
     
-    // ✅ استخدام اسم الفئة إذا كان categoryId هو اسم، أو البحث في الفئات
     if (typeof categoryId === 'string') {
       return icons[categoryId] || <FolderTree size={size} />;
     }
     return <FolderTree size={size} />;
   };
 
-  // ✅ دالة للحصول على اسم الفئة (محسنة)
+  // دالة للحصول على اسم الفئة
   const getCategoryNameDisplay = (categoryId) => {
     if (getCategoryName) {
       const name = getCategoryName(categoryId);
       if (name) return name;
     }
     
-    // fallback: إذا كان categoryId هو اسم بالفعل
     if (typeof categoryId === 'string' && !categoryId.match(/^\d+$/)) {
       return categoryId;
     }
     
-    // أسماء افتراضية للأرقام
     const categoryNames = {
       '1': 'Electronics',
       '2': 'Clothing',
@@ -193,14 +206,13 @@ const ProductGrid = ({
     return categoryNames[categoryId] || 'Other';
   };
 
-  // ✅ دالة للحصول على لون الفئة (محسنة)
+  // دالة للحصول على لون الفئة
   const getCategoryColorDisplay = (categoryId) => {
     if (getCategoryColorClass) {
       const color = getCategoryColorClass(categoryId);
       if (color) return color;
     }
     
-    // fallback: استخدام الألوان الافتراضية
     const colors = {
       'Electronics': darkMode ? 'bg-purple-900/30 text-purple-400' : 'bg-purple-100 text-purple-700',
       'Clothing': darkMode ? 'bg-pink-900/30 text-pink-400' : 'bg-pink-100 text-pink-700',
@@ -310,7 +322,7 @@ const ProductGrid = ({
         
         <div className="relative w-full h-full flex items-center justify-center p-4">
           <img 
-            src={getImageUrl(product.image)}
+            src={imageUrl}
             alt={product.name}
             className="max-w-full max-h-full w-auto h-auto transition-all duration-700 
                      group-hover:scale-110 group-hover:rotate-1"
@@ -391,7 +403,7 @@ const ProductGrid = ({
           </div>
         )}
 
-        {/* ✅ شارة الفئة - عرض اسم الفئة بدلاً من الرقم */}
+        {/* شارة الفئة */}
         <div className="absolute top-4 right-4 z-30">
           <div className={`flex items-center gap-2 px-4 py-1.5 rounded-full text-xs font-bold
                         backdrop-blur-xl shadow-2xl border
@@ -549,7 +561,6 @@ const ProductGrid = ({
                 )}
 
                 <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-4 mt-auto">
-                  {/* Brand */}
                   <div className={`group/spec relative overflow-hidden rounded-xl p-3
                                 transition-all duration-300 hover:shadow-md hover:-translate-y-0.5
                                 ${darkMode ? 'bg-neutral-700/30 hover:bg-neutral-700/50' : 'bg-neutral-50 hover:bg-neutral-100'}`}>
@@ -568,7 +579,6 @@ const ProductGrid = ({
                     </div>
                   </div>
 
-                  {/* Weight */}
                   <div className={`group/spec relative overflow-hidden rounded-xl p-3
                                 transition-all duration-300 hover:shadow-md hover:-translate-y-0.5
                                 ${darkMode ? 'bg-neutral-700/30 hover:bg-neutral-700/50' : 'bg-neutral-50 hover:bg-neutral-100'}`}>
@@ -587,7 +597,6 @@ const ProductGrid = ({
                     </div>
                   </div>
 
-                  {/* Warranty */}
                   <div className={`group/spec relative overflow-hidden rounded-xl p-3
                                 transition-all duration-300 hover:shadow-md hover:-translate-y-0.5
                                 ${darkMode ? 'bg-neutral-700/30 hover:bg-neutral-700/50' : 'bg-neutral-50 hover:bg-neutral-100'}`}>
@@ -606,7 +615,6 @@ const ProductGrid = ({
                     </div>
                   </div>
 
-                  {/* Dimensions */}
                   <div className={`group/spec relative overflow-hidden rounded-xl p-3
                                 transition-all duration-300 hover:shadow-md hover:-translate-y-0.5
                                 ${darkMode ? 'bg-neutral-700/30 hover:bg-neutral-700/50' : 'bg-neutral-50 hover:bg-neutral-100'}`}>

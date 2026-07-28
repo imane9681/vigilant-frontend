@@ -1,6 +1,26 @@
 {
   "rewrites": [
-    { "source": "/media/(.*)", "destination": "https://vigilant-backend-8owb.onrender.com/media/$1" },
-    { "source": "/(.*)", "destination": "/index.html" }
+    { 
+      "source": "/api/(.*)", 
+      "destination": "https://vigilant-backend-8owb.onrender.com/api/$1" 
+    },
+    { 
+      "source": "/media/(.*)", 
+      "destination": "https://vigilant-backend-8owb.onrender.com/media/$1" 
+    },
+    { 
+      "source": "/(.*)", 
+      "destination": "/index.html" 
+    }
+  ],
+  "headers": [
+    {
+      "source": "/media/(.*)",
+      "headers": [
+        { "key": "Access-Control-Allow-Origin", "value": "*" },
+        { "key": "Access-Control-Allow-Methods", "value": "GET, OPTIONS" },
+        { "key": "Access-Control-Allow-Headers", "value": "X-Requested-With, Content-Type, Authorization" }
+      ]
+    }
   ]
 }

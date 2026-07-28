@@ -2,6 +2,8 @@
 import axios from 'axios';
 
 const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:8000/api';
+export const MEDIA_URL = import.meta.env.VITE_MEDIA_URL || 'http://localhost:8000';
+
 
 const api = axios.create({
   baseURL: API_URL,
@@ -345,14 +347,5 @@ export const databaseService = {
     // ✅ ✅ ✅ تصحيح دالة حذف سجل الاستعلام
     deleteQueryLog: (id) => api.delete(`/database/${id}/delete_query_log/`),
 };
-
-// ✅ دالة للحصول على رابط الصورة الكامل
-export const getImageUrl = (imagePath) => {
-  if (!imagePath) return null;
-  if (imagePath.startsWith('http')) return imagePath;
-  const baseUrl = import.meta.env.VITE_API_URL.replace('/api', '');
-  return `${baseUrl}${imagePath}`;
-};
-
 
 export default api;
