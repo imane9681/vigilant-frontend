@@ -43,16 +43,21 @@ const TopProductsTable = ({ darkMode, topProducts, onRefresh }) => {
   const [reorderProduct, setReorderProduct] = useState(null);
   const [showReorderModal, setShowReorderModal] = useState(false);
 
-  // ✅ ✅ ✅ دالة للحصول على رابط الصورة
-  const getImageUrl = (image) => {
-    if (!image) return null;
-    if (typeof image === 'string') {
-      if (image.startsWith('http')) return image;
-      if (image.startsWith('/media/')) return `http://localhost:8000${image}`;
-      return `http://localhost:8000/media/${image}`;
+  // ✅ ✅ ✅ دالة مساعدة للحصول على رابط الصورة
+const getImageUrl = useCallback((image) => {
+  if (!image) return null;
+  if (typeof image === 'string') {
+    if (image.startsWith('http')) return image;
+    // ✅ استخدام VITE_API_URL من متغيرات البيئة
+    const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:8000/api';
+    const BASE_URL = API_URL.replace('/api', '');
+    if (image.startsWith('/media/')) {
+      return `${BASE_URL}${image}`;
     }
-    return null;
-  };
+    return `${BASE_URL}/media/${image}`;
+  }
+  return null;
+}, []);
 
   // ✅ ✅ ✅ دالة للحصول على صورة المنتج من مصادر متعددة
   const getProductImage = (product) => {
