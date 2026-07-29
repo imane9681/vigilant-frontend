@@ -170,27 +170,34 @@ const ProductListView = ({
   };
 
   const getImageUrl = (product) => {
-    if (product?.image) {
-      if (typeof product.image === 'string') {
-        if (product.image.startsWith('http')) return product.image;
-        return `http://localhost:8000/media/${product.image}`;
+  // ✅ استخدام VITE_API_URL من متغيرات البيئة
+  const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:8000/api';
+  const BASE_URL = API_URL.replace('/api', '');
+  
+  if (product?.image) {
+    if (typeof product.image === 'string') {
+      if (product.image.startsWith('http')) return product.image;
+      if (product.image.startsWith('/media/')) {
+        return `${BASE_URL}${product.image}`;
       }
+      return `${BASE_URL}/media/${product.image}`;
     }
-    
-    // صور افتراضية لكل فئة
-    const defaultImages = {
-      'Electronics': 'https://images.unsplash.com/photo-1550009158-9ebf69173e03?w=100&h=100&fit=crop',
-      'Clothing': 'https://images.unsplash.com/photo-1441984904996-e0b6ba687e04?w=100&h=100&fit=crop',
-      'Home & Garden': 'https://images.unsplash.com/photo-1583847268964-b28dc8f51f92?w=100&h=100&fit=crop',
-      'Books': 'https://images.unsplash.com/photo-1524995997946-a1c2e315a42f?w=100&h=100&fit=crop',
-      'Sports': 'https://images.unsplash.com/photo-1517466787929-bc90951d0974?w=100&h=100&fit=crop',
-      'Health': 'https://images.unsplash.com/photo-1505751172876-fa1923c5c528?w=100&h=100&fit=crop',
-      'Beauty': 'https://images.unsplash.com/photo-1596462502278-27bfdc403348?w=100&h=100&fit=crop',
-      'Other': 'https://images.unsplash.com/photo-1472851294608-062f824d29cc?w=100&h=100&fit=crop'
-    };
-    
-    return defaultImages[product?.category] || defaultImages['Other'];
+  }
+  
+  // صور افتراضية لكل فئة
+  const defaultImages = {
+    'Electronics': 'https://images.unsplash.com/photo-1550009158-9ebf69173e03?w=100&h=100&fit=crop',
+    'Clothing': 'https://images.unsplash.com/photo-1441984904996-e0b6ba687e04?w=100&h=100&fit=crop',
+    'Home & Garden': 'https://images.unsplash.com/photo-1583847268964-b28dc8f51f92?w=100&h=100&fit=crop',
+    'Books': 'https://images.unsplash.com/photo-1524995997946-a1c2e315a42f?w=100&h=100&fit=crop',
+    'Sports': 'https://images.unsplash.com/photo-1517466787929-bc90951d0974?w=100&h=100&fit=crop',
+    'Health': 'https://images.unsplash.com/photo-1505751172876-fa1923c5c528?w=100&h=100&fit=crop',
+    'Beauty': 'https://images.unsplash.com/photo-1596462502278-27bfdc403348?w=100&h=100&fit=crop',
+    'Other': 'https://images.unsplash.com/photo-1472851294608-062f824d29cc?w=100&h=100&fit=crop'
   };
+  
+  return defaultImages[product?.category] || defaultImages['Other'];
+};
 
   if (!products || products.length === 0) {
     return (

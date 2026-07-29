@@ -121,19 +121,23 @@ const ProductGrid = ({
 
   // دالة محسنة لجلب URL الصورة
   const getImageUrl = (image, product) => {
-    if (!image) {
-      return categoryImages[product?.category] || categoryImages['Other'];
-    }
-    if (typeof image === 'string') {
-      if (image.startsWith('http')) return image;
-      if (image.startsWith('/media/')) {
-        return `http://localhost:8000${image}`;
-      }
-      if (image.startsWith('data:')) return image;
-      return `http://localhost:8000/media/${image.replace(/^\/+/, '')}`;
-    }
+  // ✅ استخدام VITE_API_URL من متغيرات البيئة
+  const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:8000/api';
+  const BASE_URL = API_URL.replace('/api', '');
+  
+  if (!image) {
     return categoryImages[product?.category] || categoryImages['Other'];
-  };
+  }
+  if (typeof image === 'string') {
+    if (image.startsWith('http')) return image;
+    if (image.startsWith('/media/')) {
+      return `${BASE_URL}${image}`;
+    }
+    if (image.startsWith('data:')) return image;
+    return `${BASE_URL}/media/${image.replace(/^\/+/, '')}`;
+  }
+  return categoryImages[product?.category] || categoryImages['Other'];
+};
 
   // ✅ دالة للحصول على أيقونة الفئة (محسنة)
   const getCategoryIconComponent = (categoryId, size = 16) => {
