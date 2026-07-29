@@ -554,5 +554,4 @@ const ProductViewModal = ({ darkMode, product, onClose, onEdit }) => {
   );
 };
 
-
 export default ProductViewModal;
