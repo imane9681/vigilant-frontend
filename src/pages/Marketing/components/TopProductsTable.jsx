@@ -43,8 +43,9 @@ const TopProductsTable = ({ darkMode, topProducts, onRefresh }) => {
   const [reorderProduct, setReorderProduct] = useState(null);
   const [showReorderModal, setShowReorderModal] = useState(false);
 
-  // ✅ ✅ ✅ دالة مساعدة للحصول على رابط الصورة
-const getImageUrl = useCallback((image) => {
+  // ✅ ✅ ✅ دالة للحصول على رابط الصورة
+  // ✅ ✅ ✅ دالة للحصول على رابط الصورة (ديناميكية)
+const getImageUrl = (image) => {
   if (!image) return null;
   if (typeof image === 'string') {
     if (image.startsWith('http')) return image;
@@ -57,7 +58,7 @@ const getImageUrl = useCallback((image) => {
     return `${BASE_URL}/media/${image}`;
   }
   return null;
-}, []);
+};
 
   // ✅ ✅ ✅ دالة للحصول على صورة المنتج من مصادر متعددة
   const getProductImage = (product) => {
