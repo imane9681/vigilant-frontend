@@ -1,4 +1,5 @@
 // frontend/src/pages/Orders/components/CreateOrderModal.jsx
+
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { X, Plus, Trash2, Search, User, Package, DollarSign, CreditCard, AlertCircle, CheckCircle, UserPlus, Mail, Phone, MapPin, Loader2 } from 'lucide-react';
 import { orderService } from '../../../services/api';
@@ -44,6 +45,14 @@ const CreateOrderModal = ({ darkMode, isOpen, onClose, onSuccess }) => {
     accent: '#EE9C6C',
     success: '#34D19C'
   };
+
+  // ✅ ✅ ✅ طرق الدفع (تم إضافة Cash)
+  const paymentMethods = [
+    { value: 'credit_card', label: 'Credit Card', icon: CreditCard },
+    { value: 'paypal', label: 'PayPal', icon: CreditCard },
+    { value: 'bank_transfer', label: 'Bank Transfer', icon: CreditCard },
+    { value: 'cash', label: 'Cash', icon: DollarSign },  // ✅ إضافة Cash
+  ];
 
   // ✅ ✅ ✅ جلب المنتجات مع الترحيل
   const fetchProducts = useCallback(async (page = 1, search = '') => {
@@ -125,13 +134,12 @@ const CreateOrderModal = ({ darkMode, isOpen, onClose, onSuccess }) => {
     if (node) observerRef.current.observe(node);
   }, [loadingProducts, hasMoreProducts, loadMoreProducts]);
 
-  // ✅ ✅ ✅ البحث في المنتجات
+  // ✅ ✅ ✅ البحث في المنتجات - ✅✅✅ الإصلاح هنا ✅✅✅
   useEffect(() => {
+    // ✅ تأخير البحث لتجنب الطلبات المتكررة
     const timeoutId = setTimeout(() => {
-      if (searchProduct.trim() || searchProduct === '') {
-        setProductPage(1);
-        fetchProducts(1, searchProduct);
-      }
+      setProductPage(1);
+      fetchProducts(1, searchProduct);
     }, 300);
     
     return () => clearTimeout(timeoutId);
@@ -156,6 +164,7 @@ const CreateOrderModal = ({ darkMode, isOpen, onClose, onSuccess }) => {
         city: '',
         country: ''
       });
+      setSearchProduct(''); // ✅ reset search
     }
   }, [isOpen, fetchCustomers, fetchProducts]);
 
@@ -275,7 +284,7 @@ const CreateOrderModal = ({ darkMode, isOpen, onClose, onSuccess }) => {
 
     const total = calculateTotal();
 
-    // بناء بيانات الطلب حسب نوع العميل
+    // ✅ بناء بيانات الطلب حسب نوع العميل
     let orderData;
     
     if (customerType === 'existing' && selectedCustomer) {
@@ -285,7 +294,8 @@ const CreateOrderModal = ({ darkMode, isOpen, onClose, onSuccess }) => {
         total_amount: parseFloat(total.toFixed(2)),
         status: 'pending',
         payment_method: paymentMethod === 'credit_card' ? 'Credit Card' : 
-                        paymentMethod === 'paypal' ? 'PayPal' : 'Bank Transfer',
+                        paymentMethod === 'paypal' ? 'PayPal' : 
+                        paymentMethod === 'cash' ? 'Cash' : 'Bank Transfer',  // ✅ إضافة Cash
         shipping_address: selectedCustomer.address || 'No address provided',
         notes: notes || '',
         items: orderItems.map(item => ({
@@ -308,7 +318,8 @@ const CreateOrderModal = ({ darkMode, isOpen, onClose, onSuccess }) => {
         total_amount: parseFloat(total.toFixed(2)),
         status: 'pending',
         payment_method: paymentMethod === 'credit_card' ? 'Credit Card' : 
-                        paymentMethod === 'paypal' ? 'PayPal' : 'Bank Transfer',
+                        paymentMethod === 'paypal' ? 'PayPal' : 
+                        paymentMethod === 'cash' ? 'Cash' : 'Bank Transfer',  // ✅ إضافة Cash
         shipping_address: newCustomer.address || 'No address provided',
         notes: notes || '',
         items: orderItems.map(item => ({
@@ -660,7 +671,7 @@ const CreateOrderModal = ({ darkMode, isOpen, onClose, onSuccess }) => {
             </div>
           )}
 
-          {/* Step 2: Add Products - مع التمرير اللانهائي */}
+          {/* Step 2: Add Products - مع التمرير اللانهائي والبحث */}
           {step === 2 && (
             <div className="space-y-6">
               <div className="relative">
@@ -742,12 +753,8 @@ const CreateOrderModal = ({ darkMode, isOpen, onClose, onSuccess }) => {
 
               <div>
                 <label className="block text-sm font-medium mb-2">Payment Method</label>
-                <div className="grid grid-cols-3 gap-3">
-                  {[
-                    { value: 'credit_card', label: 'Credit Card', icon: CreditCard },
-                    { value: 'paypal', label: 'PayPal', icon: CreditCard },
-                    { value: 'bank_transfer', label: 'Bank Transfer', icon: CreditCard },
-                  ].map((method) => (
+                <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+                  {paymentMethods.map((method) => (
                     <button
                       key={method.value}
                       onClick={() => setPaymentMethod(method.value)}
