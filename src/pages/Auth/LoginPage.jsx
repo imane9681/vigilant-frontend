@@ -4,7 +4,8 @@ import { Link, useNavigate } from 'react-router-dom';
 import {
   Mail, Lock, Eye, EyeOff, LogIn,
   AlertCircle, ArrowRight,
-  Shield, Database, Server, Users, Sun, Moon
+  Shield, Database, Server, Users, Sun, Moon,
+  Sparkles, Copy
 } from 'lucide-react';
 import { authService } from '../../services/api';
 
@@ -20,7 +21,6 @@ const LoginPage = ({ darkMode, setDarkMode }) => {
     password: ''
   });
 
-  // ✅ مسح أي بيانات قديمة عند فتح صفحة تسجيل الدخول
   useEffect(() => {
     localStorage.removeItem('access_token');
     localStorage.removeItem('refresh_token');
@@ -40,35 +40,34 @@ const LoginPage = ({ darkMode, setDarkMode }) => {
     if (error) setError('');
   };
 
-const handleSubmit = async (e) => {
-  e.preventDefault();
-  
-  if (!formData.email || !formData.password) {
-    setError('Please fill in all fields');
-    return;
-  }
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    
+    if (!formData.email || !formData.password) {
+      setError('Please fill in all fields');
+      return;
+    }
 
-  setLoading(true);
-  setError('');
+    setLoading(true);
+    setError('');
 
-  try {
-    const response = await authService.login(formData.email, formData.password);
-    
-    
-    localStorage.setItem('access_token', response.data.access);
-    localStorage.setItem('refresh_token', response.data.refresh);
-    localStorage.setItem('user', JSON.stringify(response.data.user));
-    localStorage.setItem('isAuthenticated', 'true');
-    
-    window.location.href = '/dashboard';  // مؤقتاً بدلاً من navigate
-    
-  } catch (err) {
-    console.error('Login error:', err);
-    setError(err.response?.data?.detail || err.response?.data?.message || 'Invalid email or password');
-  } finally {
-    setLoading(false);
-  }
-};
+    try {
+      const response = await authService.login(formData.email, formData.password);
+      
+      localStorage.setItem('access_token', response.data.access);
+      localStorage.setItem('refresh_token', response.data.refresh);
+      localStorage.setItem('user', JSON.stringify(response.data.user));
+      localStorage.setItem('isAuthenticated', 'true');
+      
+      window.location.href = '/dashboard';
+      
+    } catch (err) {
+      console.error('Login error:', err);
+      setError(err.response?.data?.detail || err.response?.data?.message || 'Invalid email or password');
+    } finally {
+      setLoading(false);
+    }
+  };
 
   const toggleTheme = () => {
     setDarkMode(!darkMode);
@@ -293,6 +292,68 @@ const handleSubmit = async (e) => {
               >
                 Forgot password?
               </Link>
+            </div>
+
+            {/* Demo Credentials - Premium Minimalist Design */}
+            <div className={`relative rounded-xl p-4 border transition-all duration-300 ${
+              darkMode 
+                ? 'bg-neutral-800/40 border-neutral-700/50 hover:border-neutral-600' 
+                : 'bg-white/60 border-neutral-200/60 shadow-[0_2px_10px_-3px_rgba(139,122,186,0.1)] hover:shadow-[0_4px_15px_-3px_rgba(139,122,186,0.2)] backdrop-blur-sm hover:border-purple-200'
+            }`}>
+              <div className="flex items-center justify-between mb-3">
+                <div className="flex items-center gap-2">
+                  <div className={`p-1.5 rounded-md ${
+                    darkMode ? 'bg-neutral-700 text-neutral-300' : 'bg-purple-100/50 text-[#8B7ABA]'
+                  }`}>
+                    <Sparkles size={14} />
+                  </div>
+                  <span className={`text-sm font-semibold tracking-tight ${darkMode ? 'text-neutral-200' : 'text-neutral-800'}`}>
+                    Demo Access
+                  </span>
+                </div>
+                <div className={`h-1.5 w-1.5 rounded-full animate-pulse ${
+                  darkMode ? 'bg-[#EE9C6C]' : 'bg-[#8B7ABA]'
+                }`} />
+              </div>
+              
+              <div className="flex gap-2 mb-3">
+                <div className={`flex-1 rounded-md p-2 border ${
+                  darkMode ? 'bg-neutral-800/80 border-neutral-700/50' : 'bg-white border-neutral-100'
+                }`}>
+                  <span className={`text-[10px] font-medium uppercase tracking-wider block mb-0.5 ${darkMode ? 'text-neutral-500' : 'text-neutral-400'}`}>
+                    Email
+                  </span>
+                  <span className={`text-sm font-mono font-medium ${darkMode ? 'text-neutral-300' : 'text-neutral-700'}`}>
+                    admin@example.com
+                  </span>
+                </div>
+                <div className={`flex-1 rounded-md p-2 border ${
+                  darkMode ? 'bg-neutral-800/80 border-neutral-700/50' : 'bg-white border-neutral-100'
+                }`}>
+                  <span className={`text-[10px] font-medium uppercase tracking-wider block mb-0.5 ${darkMode ? 'text-neutral-500' : 'text-neutral-400'}`}>
+                    Password
+                  </span>
+                  <span className={`text-sm font-mono font-medium ${darkMode ? 'text-neutral-300' : 'text-neutral-700'}`}>
+                    admin123
+                  </span>
+                </div>
+              </div>
+
+              <button
+                type="button"
+                onClick={() => {
+                  setFormData({ email: 'admin@example.com', password: 'admin123' });
+                  setError('');
+                }}
+                className={`w-full py-2 rounded-md text-xs font-semibold flex items-center justify-center gap-1.5 transition-all duration-200 ${
+                  darkMode
+                    ? 'bg-neutral-700/80 text-white hover:bg-neutral-600'
+                    : 'bg-[#8B7ABA]/10 text-[#8B7ABA] hover:bg-[#8B7ABA]/20'
+                }`}
+              >
+                <Copy size={14} />
+                Auto-fill Credentials
+              </button>
             </div>
 
             {/* Submit Button */}
